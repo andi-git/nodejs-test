@@ -11,7 +11,7 @@ Just to test nodejs...
 `sudo apt-get update`<br>
 `sudo apt-get install -y mongodb-org`<br>
 **pm2 (Ubuntu)**<br>
-`sudo npm install pm2 -g`
-`sudo ln -s /usr/bin/nodejs /usr/local/bin/node`
-`pm2 start app.js`
-`(pm2 startup ubuntu)`
+`sudo npm install pm2 -g`<br>
+`sudo ln -s /usr/bin/nodejs /usr/local/bin/node`<br>
+`pm2 start app.js`<br>
+`(pm2 startup ubuntu)`<br>
