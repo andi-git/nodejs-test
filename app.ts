@@ -84,27 +84,27 @@ app.get("/elleho/" + version + "/parking/offer/:username/:latitude/:longitude", 
 
     Parking.find({user: username}).remove({}, function (err) {
         logger.emit('info', username, 'remove all parking-offer of user');
-    });
+        var currentParking = new Parking({
+            parkingId: parkingId,
+            user: username,
+            date: Date.now(),
+            location: [geoLocation.latitude, geoLocation.longitude],
+            state: 'OFFER'
+        });
+        currentParking.save(function (err) {
+            if (err)
+                logger.emit('error', username, err);
+            else
+                logger.emit('info', username, 'parking ' + parkingId + ' saved');
+        });
+        return response.json({
+            user: username,
+            parkingId: parkingId,
+            state: 'OFFER',
+            latitude: geoLocation.latitude,
+            longitude: geoLocation.longitude
+        });
 
-    var currentParking = new Parking({
-        parkingId: parkingId,
-        user: username,
-        date: Date.now(),
-        location: [geoLocation.latitude, geoLocation.longitude],
-        state: 'OFFER'
-    });
-    currentParking.save(function (err) {
-        if (err)
-            logger.emit('error', username, err);
-        else
-            logger.emit('info', username, 'parking ' + parkingId + ' saved');
-    });
-    response.json({
-        user: username,
-        parkingId: parkingId,
-        state: 'OFFER',
-        latitude: geoLocation.latitude,
-        longitude: geoLocation.longitude
     });
 });
 
