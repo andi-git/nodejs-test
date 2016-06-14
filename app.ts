@@ -1,9 +1,18 @@
+/**
+ * This is a simple server where you can store some parking-locations and search for it (near/nearest).
+ * The data is stored with the help of mongodb.
+ * The server offers a rest-api for the client.
+ * The nodejs-Framework express is used for some basic web-app-functionality.
+ * To have the benefit of types, TypeScript is used.
+ */
+
 import express = require('express');
 import {EventEmitter} from "events";
 import {GeoLocation} from "./model/position";
 
 let version = "1.0.0";
 
+// just a simple logger
 let logger = new EventEmitter();
 logger.on('info', function (user, message) {
     console.log(new Date().toISOString() + ' INFO  | ' + user + ': ' + message);
@@ -17,34 +26,26 @@ logger.on('error', function (user, message) {
 
 let app = express();
 
+// ping
 app.get("/ping", function (request, response) {
     response.writeHead(200);
     response.write("OK");
     response.end();
 });
 
+// welcome
 app.get("/", function (request, response) {
     response.writeHead(200);
     response.write("Welcome to Node.js");
     response.end();
 });
 
-app.get("/hello/:username", function (request, response) {
-    var username = request.params.username;
-    logger.emit('info', 'say hello to ' + username);
-    response.json({message: "Hello " + username + "!"});
-});
-
-app.get("/elleho/" + version + "/offer", function (request, response) {
-    response.writeHead(200);
-    response.write("elleho");
-    response.end();
-});
-
+// mongodb (with mongoose) connection
 var Parking;
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost:27017/test');
 mongoose.connection.on('error', console.error.bind(console, 'connection error:'));
+// model for a parking
 mongoose.connection.once('open', function () {
     var parkingSchema = mongoose.Schema({
         parkingId: String,
@@ -56,6 +57,7 @@ mongoose.connection.once('open', function () {
     Parking = mongoose.model('Parking', parkingSchema);
 });
 
+// interceptor for logging
 app.use(function (request, response, next) {
     var fullUrl = request.protocol + '://' + request.get('host') + request.originalUrl;
     var ip = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
@@ -63,6 +65,7 @@ app.use(function (request, response, next) {
     next();
 });
 
+// interceptor for authorization
 app.use(function (request, response, next) {
     // authenticate the user
     // let username = request.params.username;
@@ -76,6 +79,7 @@ app.use(function (request, response, next) {
     // }
 });
 
+// offer a new parking
 app.get("/elleho/" + version + "/parking/offer/:username/:latitude/:longitude", function (request, response) {
     let username = request.params.username;
     let geoLocation:GeoLocation = new GeoLocation(request.params.latitude, request.params.longitude);
@@ -108,6 +112,7 @@ app.get("/elleho/" + version + "/parking/offer/:username/:latitude/:longitude", 
     });
 });
 
+// get the current offer of a user
 app.get("/elleho/" + version + "/parking/offer/:username/current", function (request, response) {
     let username = request.params.username;
     logger.emit('info', username, 'checks current offered parking');
@@ -129,6 +134,7 @@ app.get("/elleho/" + version + "/parking/offer/:username/current", function (req
     });
 });
 
+// reset the test-data: clear the database and insert new data
 app.get("/elleho/" + version + "/parking/resettestdata", function (request, response) {
     // clear schema
     Parking.remove({}, function (err) {
@@ -182,6 +188,7 @@ app.get("/elleho/" + version + "/parking/resettestdata", function (request, resp
     response.send("Testdaten erneuert");
 });
 
+// get the nearest parking with help of mongodb-function 'near'
 app.get("/elleho/" + version + "/parking/nearest/:latitude/:longitude", function (request, response) {
     Parking.find({
         location: {
@@ -197,6 +204,7 @@ app.get("/elleho/" + version + "/parking/nearest/:latitude/:longitude", function
     });
 });
 
+// get all near parkings within 50m with help of mongodb-function 'near'
 app.get("/elleho/" + version + "/parking/near/:latitude/:longitude", function (request, response) {
     Parking.find({
         location: {
@@ -212,10 +220,12 @@ app.get("/elleho/" + version + "/parking/near/:latitude/:longitude", function (r
     });
 });
 
+// run the server on port 9090
 app.listen(9090, function () {
     console.log("Node.js (express) server listening on port %d in %s mode", 9090, app.settings.env);
 });
 
+// generate an id
 function guid() {
     function s4() {
         return Math.floor((1 + Math.random()) * 0x10000)
