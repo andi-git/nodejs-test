@@ -17,3 +17,7 @@ Just to test nodejs with mongodb...
 `sudo ln -s /usr/bin/nodejs /usr/local/bin/node`<br>
 `pm2 start app.js`<br>
 `(pm2 startup ubuntu)`<br>
+
+# Run Application
+`node app.js`  (in the directory where app.js is located)<br>
+The log-output must be: `Node.js (express) server listening on port 9090 in development mode`<br>
