@@ -9,8 +9,10 @@
 import express = require('express');
 import {EventEmitter} from "events";
 import {GeoLocation} from "./model/position";
+import {Response} from "express";
 
-let version = "1.0.0";
+let version_0_0_1 = "0.0.1";
+let version_0_0_2 = "0.0.2";
 
 // just a simple logger
 let logger = new EventEmitter();
@@ -23,6 +25,80 @@ logger.on('warn', function (user, message) {
 logger.on('error', function (user, message) {
     console.log(new Date().toISOString() + ' ERROR | ' + user + '' + message);
 });
+
+var offerParking = function (username:string, geoLocation:GeoLocation, response:Response) {
+    let parkingId = guid();
+    logger.emit('info', username, 'offers parking ' + parkingId + ' at ' + geoLocation);
+
+    Parking.find({user: username}).remove({}, function (err) {
+        logger.emit('info', username, 'remove all parking-offer of user');
+        var currentParking = new Parking({
+            parkingId: parkingId,
+            user: username,
+            date: Date.now(),
+            location: [geoLocation.latitude, geoLocation.longitude],
+            state: 'OFFER'
+        });
+        currentParking.save(function (err) {
+            if (err)
+                logger.emit('error', username, err);
+            else
+                logger.emit('info', username, 'parking ' + parkingId + ' saved');
+        });
+        return response.json({
+            user: username,
+            parkingId: parkingId,
+            state: 'OFFER',
+            latitude: geoLocation.latitude,
+            longitude: geoLocation.longitude
+        });
+    });
+};
+
+var currentParking = function (username:string, response:Response) {
+    logger.emit('info', username, 'checks current offered parking');
+    Parking.findOne({user: username}, {}, {sort: {'date': -1}}, function (err, parkingData) {
+        if (err) {
+            logger.emit('error', username, err);
+            response.writeHead(500);
+            response.end();
+        } else {
+            logger.emit('info', username, 'current offered parking is ' + parkingData);
+            return response.json({
+                user: username,
+                parkingId: parkingData.parkingId,
+                state: parkingData.state,
+                latitude: parkingData.location[0],
+                longitude: parkingData.location[1]
+            });
+        }
+    });
+};
+
+var nearest = function (username:string, geoLocation:GeoLocation, response:Response) {
+    logger.emit('info', username, 'checks nearest for ' + geoLocation);
+    return getParkings(geoLocation, 1, 50, response);
+};
+
+var near = function (username:string, geoLocation:GeoLocation, response:Response) {
+    logger.emit('info', username, 'checks near for ' + geoLocation);
+    return getParkings(geoLocation, 3, 10, response);
+};
+
+var getParkings = function (geoLocation:GeoLocation, limit:number, maxDistance:number, response:Response) {
+    Parking.find({
+        location: {
+            $near: [geoLocation.latitude, geoLocation.longitude],
+            $maxDistance: maxDistance
+        }
+    }).limit(limit).exec(function (err, parkings) {
+        if (err) {
+            return response.json(500, err);
+        } else {
+            return response.json(parkings);
+        }
+    });
+};
 
 let app = express();
 
@@ -67,75 +143,65 @@ app.use(function (request, response, next) {
 
 // interceptor for authorization
 app.use(function (request, response, next) {
-    // authenticate the user
-    // let username = request.params.username;
-    // let password = request.params.password;
-    // if (username === "test" && password === "1234") {
-    next();
-    // } else {
-    //     logger.emit('warn', username, 'wrong password: ' + password);
-    //     response.writeHead(401);
-    //     response.end();
-    // }
+    var fullUrl = request.protocol + '://' + request.get('host') + request.originalUrl;
+    if (fullUrl.indexOf(version_0_0_1) > -1) {
+        next();
+    } else {
+        // authenticate the user
+        let username = request.get("username");
+        let password = request.get("password");
+        if ((username === "test" && password === "1234") || (username === "elle" && password === "ho")) {
+            next();
+        } else {
+            logger.emit('warn', username, 'wrong password: ' + password);
+            response.writeHead(401);
+            response.end();
+        }
+    }
 });
 
 // offer a new parking
-app.get("/elleho/" + version + "/parking/offer/:username/:latitude/:longitude", function (request, response) {
-    let username = request.params.username;
-    let geoLocation:GeoLocation = new GeoLocation(request.params.latitude, request.params.longitude);
-    let parkingId = guid();
-    logger.emit('info', username, 'offers parking ' + parkingId + ' at ' + geoLocation);
+app.get("/elleho/" + version_0_0_1 + "/parking/offer/:username/:latitude/:longitude", function (request, response) {
+    return offerParking(request.params.username, new GeoLocation(request.params.latitude, request.params.longitude), response);
+});
 
-    Parking.find({user: username}).remove({}, function (err) {
-        logger.emit('info', username, 'remove all parking-offer of user');
-        var currentParking = new Parking({
-            parkingId: parkingId,
-            user: username,
-            date: Date.now(),
-            location: [geoLocation.latitude, geoLocation.longitude],
-            state: 'OFFER'
-        });
-        currentParking.save(function (err) {
-            if (err)
-                logger.emit('error', username, err);
-            else
-                logger.emit('info', username, 'parking ' + parkingId + ' saved');
-        });
-        return response.json({
-            user: username,
-            parkingId: parkingId,
-            state: 'OFFER',
-            latitude: geoLocation.latitude,
-            longitude: geoLocation.longitude
-        });
-
-    });
+// offer a new parking
+app.post("/elleho/" + version_0_0_2 + "/parking/offer/:latitude/:longitude", function (request, response) {
+    return offerParking(request.get("username"), new GeoLocation(request.params.latitude, request.params.longitude), response);
 });
 
 // get the current offer of a user
-app.get("/elleho/" + version + "/parking/offer/:username/current", function (request, response) {
-    let username = request.params.username;
-    logger.emit('info', username, 'checks current offered parking');
-    Parking.findOne({user: username}, {}, {sort: {'date': -1}}, function (err, parkingData) {
-        if (err) {
-            logger.emit('error', username, err);
-            response.writeHead(500);
-            response.end();
-        } else {
-            logger.emit('info', username, 'current offered parking is ' + parkingData);
-            response.json({
-                user: username,
-                parkingId: parkingData.parkingId,
-                state: parkingData.state,
-                latitude: parkingData.location[0],
-                longitude: parkingData.location[1]
-            });
-        }
-    });
+app.get("/elleho/" + version_0_0_1 + "/parking/offer/:username/current", function (request, response) {
+    return currentParking(request.params.username, response);
+});
+
+// get the current offer of a user
+app.get("/elleho/" + version_0_0_2 + "/parking/offer/current", function (request, response) {
+    return currentParking(request.get("username"), response);
+});
+
+// get the nearest parking with help of mongodb-function 'near'
+app.get("/elleho/" + version_0_0_1 + "/parking/nearest/:latitude/:longitude", function (request, response) {
+    return nearest("n/a", new GeoLocation(request.params.latitude, request.params.longitude), response);
+});
+
+// get the nearest parking with help of mongodb-function 'near'
+app.get("/elleho/" + version_0_0_2 + "/parking/nearest/:latitude/:longitude", function (request, response) {
+    return nearest(request.get("username"), new GeoLocation(request.params.latitude, request.params.longitude), response);
+});
+
+// get all near parkings within 50m with help of mongodb-function 'near'
+app.get("/elleho/" + version_0_0_1 + "/parking/near/:latitude/:longitude", function (request, response) {
+    return near("n/a", new GeoLocation(request.params.latitude, request.params.longitude), response);
+});
+
+// get all near parkings within 50m with help of mongodb-function 'near'
+app.get("/elleho/" + version_0_0_2 + "/parking/near/:latitude/:longitude", function (request, response) {
+    return near(request.get("username"), new GeoLocation(request.params.latitude, request.params.longitude), response);
 });
 
 // reset the test-data: clear the database and insert new data
-app.get("/elleho/" + version + "/parking/resettestdata", function (request, response) {
+app.get("/elleho/" + version_0_0_1 + "/parking/resettestdata", function (request, response) {
     // clear schema
     Parking.remove({}, function (err) {
         logger.emit('info', null, 'remove all parkings');
@@ -186,38 +252,6 @@ app.get("/elleho/" + version + "/parking/resettestdata", function (request, resp
         logger.emit('info', null, 'number of offered parkings: ' + count);
     });
     response.send("Testdaten erneuert");
-});
-
-// get the nearest parking with help of mongodb-function 'near'
-app.get("/elleho/" + version + "/parking/nearest/:latitude/:longitude", function (request, response) {
-    Parking.find({
-        location: {
-            $near: [request.params.latitude, request.params.longitude],
-            $maxDistance: 50
-        }
-    }).limit(1).exec(function (err, parkings) {
-        if (err) {
-            return response.json(500, err);
-        } else {
-            return response.json(parkings);
-        }
-    });
-});
-
-// get all near parkings within 50m with help of mongodb-function 'near'
-app.get("/elleho/" + version + "/parking/near/:latitude/:longitude", function (request, response) {
-    Parking.find({
-        location: {
-            $near: [request.params.latitude, request.params.longitude],
-            $maxDistance: 50
-        }
-    }).limit(3).exec(function (err, parkings) {
-        if (err) {
-            return response.json(500, err);
-        } else {
-            return response.json(parkings);
-        }
-    });
 });
 
 // run the server on port 9090
