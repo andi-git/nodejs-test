@@ -6,7 +6,7 @@
   "bundle": "typings/tsd.d.ts",
   "installed": {
     "node/node.d.ts": {
-      "commit": "e05e1f6f83c6ac84e9d7ff8284e8089d53a788a6"
+      "commit": "3fa452ae1146f2e9ebb3286038b4b1c343781382"
     },
     "serve-static/serve-static.d.ts": {
       "commit": "e05e1f6f83c6ac84e9d7ff8284e8089d53a788a6"
@@ -19,6 +19,9 @@
     },
     "express/express.d.ts": {
       "commit": "e05e1f6f83c6ac84e9d7ff8284e8089d53a788a6"
+    },
+    "mongoose/mongoose.d.ts": {
+      "commit": "3fa452ae1146f2e9ebb3286038b4b1c343781382"
     }
   }
 }

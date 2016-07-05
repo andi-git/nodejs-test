@@ -8,6 +8,14 @@
     "./typings/tsd.d.ts",
     "./routes/index.ts",
     "./db.ts",
-    "./app.ts"
+    "./app.ts",
+    "./model/position.ts",
+    "./model/user.ts",
+    "./model-db/parking.ts",
+    "./service/parkingService.ts",
+    "./service/testDataService.ts",
+    "./util/idGenerator.ts",
+    "./util/logger.ts",
+    "./util/result.ts"
   ]
 }

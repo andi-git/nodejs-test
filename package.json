@@ -9,6 +9,7 @@
     "express": "^4.13.4",
     "mongodb": "^2.1.18",
     "mongoose": "^4.4.14",
+    "ts-events": "^3.1.1",
     "tsd": "^0.6.5",
     "typescript": "^1.8.10"
   },
