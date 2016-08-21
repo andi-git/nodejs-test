@@ -72,6 +72,19 @@ var ParkingService = (function () {
         });
         return result;
     };
+    ParkingService.prototype.all = function (user) {
+        var result = new result_1.ResultBasic();
+        this.logger.info('get all parkings', user);
+        parking_1.ParkingModel.find({}).sort('date').exec(function (err, parkings) {
+            if (err) {
+                result.error();
+            }
+            else {
+                result.success(parkings);
+            }
+        });
+        return result;
+    };
     ParkingService.prototype.parkings = function (geoLocation, limit, maxDistance) {
         var result = new result_1.ResultBasic();
         parking_1.ParkingModel.find({
@@ -92,4 +105,3 @@ var ParkingService = (function () {
     return ParkingService;
 }());
 exports.ParkingService = ParkingService;
-//# sourceMappingURL=parkingService.js.map

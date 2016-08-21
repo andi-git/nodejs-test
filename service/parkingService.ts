@@ -7,16 +7,16 @@ import {Logger} from "../util/logger";
 
 export class ParkingService {
 
-    logger:Logger = new Logger();
+    logger: Logger = new Logger();
 
     constructor() {
     }
 
-    public offer(user:User, geoLocation:GeoLocation):Result<Parking> {
-        let result:Result<Parking> = new ResultBasic<Parking>();
+    public offer(user: User, geoLocation: GeoLocation): Result<Parking> {
+        let result: Result<Parking> = new ResultBasic<Parking>();
         let parkingId = IdGenerator.guid();
         this.logger.info('offers parking ' + parkingId + ' at ' + geoLocation, user);
-        ParkingModel.find({user: user}).remove({}, function (err) {
+        ParkingModel.find({user: user}).remove({}, (err) => {
             new Logger().info('remove all parking-offer of user', user);
             var parking = new ParkingModel({
                 parkingId: parkingId,
@@ -25,7 +25,7 @@ export class ParkingService {
                 location: [geoLocation.latitude, geoLocation.longitude],
                 state: 'OFFER'
             });
-            parking.save(function (err) {
+            parking.save((err) => {
                 if (err) {
                     new Logger().error(err, user);
                     result.error();
@@ -39,10 +39,10 @@ export class ParkingService {
         return result;
     }
 
-    public current(user:User):Result<Parking> {
-        let result:Result<Parking> = new ResultBasic<Parking>();
+    public current(user: User): Result<Parking> {
+        let result: Result<Parking> = new ResultBasic<Parking>();
         this.logger.info('checks current offered parking', user);
-        ParkingModel.findOne({user: user.name}, {}, {sort: {'date': -1}}, function (err, parking) {
+        ParkingModel.findOne({user: user.name}, {}, {sort: {'date': -1}}, (err, parking) => {
             if (err) {
                 new Logger().error(err, user);
                 result.error();
@@ -54,40 +54,53 @@ export class ParkingService {
         return result;
     }
 
-    public nearest(user:User, geoLocation:GeoLocation):Result<Parking> {
-        let result:Result<Parking> = new ResultBasic<Parking>();
+    public nearest(user: User, geoLocation: GeoLocation): Result<Parking> {
+        let result: Result<Parking> = new ResultBasic<Parking>();
         this.logger.info('checks nearest for ' + geoLocation, user);
         this.parkings(geoLocation, 1, 100)
-            .onSuccess(function (parkings:Array<Parking>) {
+            .onSuccess((parkings: Array<Parking>) => {
                 result.success(parkings[0]);
             })
-            .onError(function (parkings:Array<Parking>) {
+            .onError((parkings: Array<Parking>) => {
                 result.error(parkings[0]);
             });
         return result;
     }
 
-    public near(user:User, geoLocation:GeoLocation):Result<Array<Parking>> {
-        let result:Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
+    public near(user: User, geoLocation: GeoLocation): Result<Array<Parking>> {
+        let result: Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
         this.logger.info('checks near for ' + geoLocation, user);
         this.parkings(geoLocation, 3, 100)
-            .onSuccess(function (parkings:Array<Parking>) {
+            .onSuccess((parkings: Array<Parking>) => {
                 result.success(parkings);
             })
-            .onError(function (parkings:Array<Parking>) {
+            .onError((parkings: Array<Parking>) => {
                 result.error(parkings);
             });
         return result;
     }
 
-    private parkings(geoLocation:GeoLocation, limit:number, maxDistance:number):Result<Array<Parking>> {
-        let result:Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
+    public all(user: User): Result<Array<Parking>> {
+        let result: Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
+        this.logger.info('get all parkings', user);
+        ParkingModel.find({}).sort('date').exec((err, parkings) => {
+            if (err) {
+                result.error();
+            } else {
+                result.success(parkings);
+            }
+        });
+        return result;
+    }
+
+    private parkings(geoLocation: GeoLocation, limit: number, maxDistance: number): Result<Array<Parking>> {
+        let result: Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
         ParkingModel.find({
             location: {
                 $near: [geoLocation.latitude, geoLocation.longitude],
                 $maxDistance: maxDistance
             }
-        }).limit(limit).exec(function (err, parkings) {
+        }).limit(limit).exec((err, parkings) => {
             if (err) {
                 result.error();
             } else {

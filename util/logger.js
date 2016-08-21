@@ -29,4 +29,3 @@ exports.Logger = Logger;
     LogLevel[LogLevel["ERROR"] = 2] = "ERROR";
 })(exports.LogLevel || (exports.LogLevel = {}));
 var LogLevel = exports.LogLevel;
-//# sourceMappingURL=logger.js.map

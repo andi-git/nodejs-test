@@ -6,6 +6,7 @@
  * To have the benefit of types, TypeScript is used.
  */
 "use strict";
+var _this = this;
 var express = require('express');
 var position_1 = require("./model/position");
 var user_1 = require("./model/user");
@@ -41,6 +42,7 @@ var offerParking = function (user, geoLocation, response) {
     });
 };
 var currentParking = function (user, response) {
+    var _this = this;
     new parkingService_1.ParkingService().current(user)
         .onSuccess(function (parking) {
         return response.json({
@@ -52,25 +54,27 @@ var currentParking = function (user, response) {
         });
     })
         .onError(function (parking) {
-        this.serverError("error on current parking " + parking, user, response);
+        _this.serverError("error on current parking " + parking, user, response);
     });
 };
 var nearest = function (user, geoLocation, response) {
+    var _this = this;
     new parkingService_1.ParkingService().nearest(user, geoLocation)
-        .onSuccess(function (parkings) {
-        return response.json(parkings);
+        .onSuccess(function (parking) {
+        return response.json(parking);
     })
         .onError(function (result) {
-        this.serverError("error on nearest parking", user, response);
+        _this.serverError("error on nearest parking", user, response);
     });
 };
 var near = function (user, geoLocation, response) {
+    var _this = this;
     new parkingService_1.ParkingService().near(user, geoLocation)
         .onSuccess(function (parkings) {
         return response.json(parkings);
     })
         .onError(function (result) {
-        this.serverError("error on near parking", user, response);
+        _this.serverError("error on near parking", user, response);
     });
 };
 var app = express();
@@ -100,16 +104,22 @@ app.use(function (request, response, next) {
         next();
     }
     else {
-        // authenticate the user
-        var username = request.get("username");
-        var password = request.get("password");
-        if ((username === "test" && password === "1234") || (username === "elle" && password === "ho")) {
+        if (restResourceFromRequest(request) === '/parking/resettestdata' ||
+            restResourceFromRequest(request) === '/parking') {
             next();
         }
         else {
-            logger.warn('wrong password: ' + password, new user_1.User(username));
-            response.writeHead(401);
-            response.end();
+            // authenticate the user
+            var username = request.get("username");
+            var password = request.get("password");
+            if ((username === "test" && password === "1234") || (username === "elle" && password === "ho")) {
+                next();
+            }
+            else {
+                logger.warn('wrong password: ' + password, new user_1.User(username));
+                response.writeHead(401);
+                response.end();
+            }
         }
     }
 });
@@ -145,8 +155,23 @@ app.get("/elleho/" + version_0_0_1 + "/parking/near/:latitude/:longitude", funct
 app.get("/elleho/" + version_0_0_2 + "/parking/near/:latitude/:longitude", function (request, response) {
     return near(userFromRequest(request), new position_1.GeoLocation(request.params.latitude, request.params.longitude), response);
 });
+// get all parkings in the database
+app.get("/elleho/" + version_0_0_2 + "/parking", function (request, response) {
+    new parkingService_1.ParkingService().all(userFromRequest(request))
+        .onSuccess(function (parkings) {
+        return response.json(parkings);
+    })
+        .onError(function (result) {
+        _this.serverError("error on all parkings", userFromRequest(request), response);
+    });
+});
 // reset the test-data: clear the database and insert new data
 app.get("/elleho/" + version_0_0_1 + "/parking/resettestdata", function (request, response) {
+    new testDataService_1.TestDataService().resetParking();
+    response.send("Testdaten erneuert");
+});
+// reset the test-data: clear the database and insert new data
+app.get("/elleho/" + version_0_0_2 + "/parking/resettestdata", function (request, response) {
     new testDataService_1.TestDataService().resetParking();
     response.send("Testdaten erneuert");
 });
@@ -157,4 +182,7 @@ app.listen(9090, function () {
 function userFromRequest(request) {
     return new user_1.User(request.get("username"));
 }
-//# sourceMappingURL=app.js.map
+function restResourceFromRequest(request) {
+    var split = request.originalUrl.split('/');
+    return request.originalUrl.substr(split[0].length + split[1].length + split[2].length + 2);
+}
