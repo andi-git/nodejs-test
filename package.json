@@ -2,16 +2,26 @@
   "name": "nodejs-test",
   "version": "1.0.0",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/.bin/mocha --reporter spec"
   },
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.15.2",
     "express": "^4.13.4",
     "mongodb": "^2.1.18",
     "mongoose": "^4.4.14",
     "ts-events": "^3.1.1",
     "tsd": "^0.6.5",
-    "typescript": "^1.8.10"
+    "typescript": "^1.8.10",
+    "typescript-stl": "^1.0.6"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-clean": "^0.3.2",
+    "gulp-nodeunit": "0.0.5",
+    "gulp-typescript": "^2.13.6",
+    "gulp-util": "^3.0.7",
+    "nodeunit": "^0.10.2",
+    "typescript-require": "^0.2.9-1"
+  }
 }

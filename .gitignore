@@ -2,3 +2,5 @@
 node_modules
 typings
 *.iml
+dist
+nodeunit-report

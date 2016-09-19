@@ -2,20 +2,20 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "ES5",
-    "sourceMap": true
+    "sourceMap": true,
+    "outDir": "dist"
   },
   "files": [
     "./typings/tsd.d.ts",
-    "./routes/index.ts",
-    "./db.ts",
-    "./app.ts",
-    "./model/position.ts",
-    "./model/user.ts",
-    "./model-db/parking.ts",
-    "./service/parkingService.ts",
-    "./service/testDataService.ts",
-    "./util/idGenerator.ts",
-    "./util/logger.ts",
-    "./util/result.ts"
+    "./src/app.ts",
+    "./src/model/position.ts",
+    "./src/model/user.ts",
+    "./src/model-db/parking.ts",
+    "./src/service/parkingService.ts",
+    "./src/service/testDataService.ts",
+    "./src/util/idGenerator.ts",
+    "./src/util/logger.ts",
+    "./src/util/result.ts",
+    "./test/util/idGenerator.spec.ts"
   ]
 }
