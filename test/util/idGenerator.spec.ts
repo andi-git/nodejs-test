@@ -1,14 +1,14 @@
 import {IdGenerator, IdGeneratorBasic} from '../../src/util/idGenerator';
 import std = require('typescript-stl');
-import "reflect-metadata";
-import {Kernel} from "inversify";
+import 'reflect-metadata';
+import {Kernel} from 'inversify';
 'use strict';
+import {LoggerBasic, Logger} from '../../src/util/logger';
+import TYPES from '../../src/types';
 
-let TYPES = {
-    IdGenerator: Symbol("IdGenerator")
-};
 var kernel = new Kernel();
-kernel.bind<IdGenerator>(TYPES.IdGenerator).to(IdGeneratorBasic);
+kernel.bind<Logger>(TYPES.Logger).to(LoggerBasic).inSingletonScope();
+kernel.bind<IdGenerator>(TYPES.IdGenerator).to(IdGeneratorBasic).inSingletonScope();
 let idGenerator: IdGenerator = kernel.get<IdGenerator>(TYPES.IdGenerator);
 
 exports.testLengthOfGeneratedId = function (test) {

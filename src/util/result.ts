@@ -1,4 +1,4 @@
-import {SyncEvent} from "ts-events/dist/lib/index";
+import {SyncEvent} from 'ts-events/dist/lib/index';
 
 export interface Result<T> {
 

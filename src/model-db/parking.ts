@@ -1,4 +1,4 @@
-import mongoose = require("mongoose");
+import mongoose = require('mongoose');
 
 export interface Parking extends mongoose.Document {
     parkingId: String,

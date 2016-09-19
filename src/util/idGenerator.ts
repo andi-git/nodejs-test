@@ -1,9 +1,9 @@
-import {injectable} from "inversify";
-import "reflect-metadata";
-import {Logger} from "./logger";
-import TYPES from "../types";
-import {inject} from "inversify";
-import "reflect-metadata";
+import {injectable} from 'inversify';
+import 'reflect-metadata';
+import {Logger} from './logger';
+import TYPES from '../types';
+import {inject} from 'inversify';
+import 'reflect-metadata';
 
 export interface IdGenerator {
 
@@ -18,7 +18,7 @@ export class IdGeneratorBasic implements IdGenerator {
     }
 
     guid(): string {
-        let id: string = "";
+        let id: string = '';
         let first: boolean = true;
         for (let i: number = 0; i < 8; i++) {
             if (first === false) {

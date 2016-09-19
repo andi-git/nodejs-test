@@ -1,14 +1,14 @@
-import {injectable} from "inversify";
-import "reflect-metadata";
-import {Parking, ParkingModel} from "../model-db/parking";
-import {Result, ResultBasic} from "../util/result";
-import {IdGenerator} from "../util/idGenerator";
-import {GeoLocation} from "../model/position";
-import {User} from "../model/user";
-import {Logger} from "../util/logger";
-import TYPES from "../types";
-import {inject} from "inversify";
-import "reflect-metadata";
+import {injectable} from 'inversify';
+import 'reflect-metadata';
+import {Parking, ParkingModel} from '../model-db/parking';
+import {Result, ResultBasic} from '../util/result';
+import {IdGenerator} from '../util/idGenerator';
+import {GeoLocation} from '../model/position';
+import {User} from '../model/user';
+import {Logger} from '../util/logger';
+import TYPES from '../types';
+import {inject} from 'inversify';
+import 'reflect-metadata';
 
 export interface ParkingService {
 
