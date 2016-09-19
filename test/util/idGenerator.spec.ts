@@ -1,15 +1,15 @@
-import {IdGenerator, IdGenerator2, IdGenerator2Basic} from '../../src/util/idGenerator';
+import {IdGenerator, IdGeneratorBasic} from '../../src/util/idGenerator';
 import std = require('typescript-stl');
 import "reflect-metadata";
 import {Kernel} from "inversify";
 'use strict';
 
 let TYPES = {
-    IdGenerator2: Symbol("IdGenerator2")
+    IdGenerator: Symbol("IdGenerator")
 };
 var kernel = new Kernel();
-kernel.bind<IdGenerator2>(TYPES.IdGenerator2).to(IdGenerator2Basic);
-let idGenerator: IdGenerator2 = kernel.get<IdGenerator2>(TYPES.IdGenerator2);
+kernel.bind<IdGenerator>(TYPES.IdGenerator).to(IdGeneratorBasic);
+let idGenerator: IdGenerator = kernel.get<IdGenerator>(TYPES.IdGenerator);
 
 exports.testLengthOfGeneratedId = function (test) {
     test.expect(1);

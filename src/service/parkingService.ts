@@ -1,23 +1,48 @@
+import {injectable} from "inversify";
+import "reflect-metadata";
 import {Parking, ParkingModel} from "../model-db/parking";
 import {Result, ResultBasic} from "../util/result";
 import {IdGenerator} from "../util/idGenerator";
 import {GeoLocation} from "../model/position";
 import {User} from "../model/user";
 import {Logger} from "../util/logger";
+import TYPES from "../types";
+import {inject} from "inversify";
+import "reflect-metadata";
 
-export class ParkingService {
+export interface ParkingService {
 
-    logger: Logger = new Logger();
+    offer(user: User, geoLocation: GeoLocation): Result<Parking>;
 
-    constructor() {
+    current(user: User): Result<Parking>;
+
+    nearest(user: User, geoLocation: GeoLocation): Result<Parking>;
+
+    near(user: User, geoLocation: GeoLocation): Result<Array<Parking>>;
+
+    all(user: User): Result<Array<Parking>>;
+}
+
+@injectable()
+export class ParkingServiceBasic implements ParkingService {
+
+    logger: Logger;
+    idGenerator: IdGenerator;
+
+    constructor(@inject(TYPES.Logger) logger: Logger,
+                @inject(TYPES.IdGenerator) idGenerator: IdGenerator) {
+        this.logger = logger;
+        this.idGenerator = idGenerator;
+        logger.info('create ' + this.constructor.name);
     }
 
     public offer(user: User, geoLocation: GeoLocation): Result<Parking> {
+        let self = this;
         let result: Result<Parking> = new ResultBasic<Parking>();
-        let parkingId = IdGenerator.guid();
-        this.logger.info('offers parking ' + parkingId + ' at ' + geoLocation, user);
+        let parkingId = this.idGenerator.guid();
+        self.logger.info('offers parking ' + parkingId + ' at ' + geoLocation, user);
         ParkingModel.find({user: user}).remove({}, (err) => {
-            new Logger().info('remove all parking-offer of user', user);
+            self.logger.info('remove all parking-offer of user', user);
             var parking = new ParkingModel({
                 parkingId: parkingId,
                 user: user.name,
@@ -27,11 +52,11 @@ export class ParkingService {
             });
             parking.save((err) => {
                 if (err) {
-                    new Logger().error(err, user);
+                    self.logger.error(err, user);
                     result.error();
                 }
                 else {
-                    new Logger().info('parking ' + parkingId + ' saved', user);
+                    self.logger.info('parking ' + parkingId + ' saved', user);
                     result.success(parking);
                 }
             });
@@ -40,14 +65,15 @@ export class ParkingService {
     }
 
     public current(user: User): Result<Parking> {
+        let self = this;
         let result: Result<Parking> = new ResultBasic<Parking>();
-        this.logger.info('checks current offered parking', user);
+        self.logger.info('checks current offered parking', user);
         ParkingModel.findOne({user: user.name}, {}, {sort: {'date': -1}}, (err, parking) => {
             if (err) {
-                new Logger().error(err, user);
+                self.logger.error(err, user);
                 result.error();
             } else {
-                new Logger().info('current offered parking is ' + parking, user);
+                self.logger.info('current offered parking is ' + parking, user);
                 result.success(parking);
             }
         });
@@ -55,8 +81,9 @@ export class ParkingService {
     }
 
     public nearest(user: User, geoLocation: GeoLocation): Result<Parking> {
+        let self = this;
         let result: Result<Parking> = new ResultBasic<Parking>();
-        this.logger.info('checks nearest for ' + geoLocation, user);
+        self.logger.info('checks nearest for ' + geoLocation, user);
         this.parkings(geoLocation, 1, 100)
             .onSuccess((parkings: Array<Parking>) => {
                 result.success(parkings[0]);
@@ -68,8 +95,9 @@ export class ParkingService {
     }
 
     public near(user: User, geoLocation: GeoLocation): Result<Array<Parking>> {
+        let self = this;
         let result: Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
-        this.logger.info('checks near for ' + geoLocation, user);
+        self.logger.info('checks near for ' + geoLocation, user);
         this.parkings(geoLocation, 3, 100)
             .onSuccess((parkings: Array<Parking>) => {
                 result.success(parkings);
@@ -81,8 +109,9 @@ export class ParkingService {
     }
 
     public all(user: User): Result<Array<Parking>> {
+        let self = this;
         let result: Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
-        this.logger.info('get all parkings', user);
+        self.logger.info('get all parkings', user);
         ParkingModel.find({}).sort('date').exec((err, parkings) => {
             if (err) {
                 result.error();

@@ -9,6 +9,7 @@
   "files": [
     "./typings/tsd.d.ts",
     "./src/app.ts",
+    "./src/types.ts",
     "./src/model/position.ts",
     "./src/model/user.ts",
     "./src/model-db/parking.ts",
