@@ -4,6 +4,7 @@ import {Kernel} from 'inversify';
 import {LoggerBasic, Logger} from '../../src/util/logger';
 import TYPES from '../../src/types';
 import {User} from "../../src/model/user";
+import {BaseEvent} from "ts-events";
 
 var kernel = new Kernel();
 kernel.bind<Logger>(TYPES.Logger).to(LoggerBasic).inSingletonScope();
@@ -26,7 +27,7 @@ function waitloop(njtest: any, callback: Function) {
         if (finish === false) {
             waitloop(njtest, callback);
         } else {
-            callback.call(this, njtest, assertMessage);
+            callback.call(this, njtest);
         }
     }, 100);
 }
@@ -46,31 +47,30 @@ exports.groupOne = testCase({
 
     testLogInfo: function (njtest) {
         logger.info('hello', user);
-        waitloop(njtest, function (njtest, message) {
-            console.log('message: ' + message);
+        waitloop(njtest, function (njtest) {
             njtest.expect(2);
-            njtest.equal(message.length, 48);
-            njtest.ok(message.includes('INFO  | testuser: hello'));
+            njtest.equal(assertMessage.length, 48);
+            njtest.ok(assertMessage.includes('INFO  | testuser: hello'));
             njtest.done();
         });
     },
 
     testLogWarn: function (njtest) {
         logger.warn('hello', user);
-        waitloop(njtest, function (njtest, message) {
+        waitloop(njtest, function (njtest) {
             njtest.expect(2);
-            njtest.equal(message.length, 48);
-            njtest.ok(message.includes('WARN  | testuser: hello'));
+            njtest.equal(assertMessage.length, 48);
+            njtest.ok(assertMessage.includes('WARN  | testuser: hello'));
             njtest.done();
         });
     },
 
     testLogError: function (njtest) {
         logger.error('hello', user);
-        waitloop(njtest, function (njtest, message) {
+        waitloop(njtest, function (njtest) {
             njtest.expect(2);
-            njtest.equal(message.length, 48);
-            njtest.ok(message.includes('ERROR | testuser: hello'));
+            njtest.equal(assertMessage.length, 48);
+            njtest.ok(assertMessage.includes('ERROR | testuser: hello'));
             njtest.done();
         });
     }
