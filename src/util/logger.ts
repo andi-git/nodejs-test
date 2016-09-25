@@ -10,6 +10,8 @@ export interface Logger {
     warn(message: string, user?: User);
 
     error(message: string, user?: User);
+
+    getLogEvent(): AsyncEvent<string>;
 }
 
 @injectable()
@@ -36,10 +38,23 @@ export class LoggerBasic implements Logger {
         this.event.post(this.createMessage(LogLevel.ERROR, message, user));
     }
 
+    public getLogEvent(): AsyncEvent<string> {
+        return this.event;
+    }
+
     //noinspection JSMethodCanBeStatic
     private createMessage(logLevel: LogLevel, message: string, user?: User): string {
         let username: string = user != null ? user.name : 'undefined';
-        return new Date().toISOString() + ' ' + LogLevel[logLevel] + '  | ' + username + ': ' + message;
+        return new Date().toISOString() + ' ' + this.getLogLevelString(logLevel) + ' | ' + username + ': ' + message;
+    }
+
+    //noinspection JSMethodCanBeStatic
+    private getLogLevelString(logLevel: LogLevel): string {
+        let result: string = LogLevel[logLevel];
+        if (LogLevel[logLevel].length < 5) {
+            result = result + ' ';
+        }
+        return result;
     }
 }
 

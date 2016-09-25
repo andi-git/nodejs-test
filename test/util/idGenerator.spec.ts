@@ -2,7 +2,6 @@ import {IdGenerator, IdGeneratorBasic} from '../../src/util/idGenerator';
 import std = require('typescript-stl');
 import 'reflect-metadata';
 import {Kernel} from 'inversify';
-'use strict';
 import {LoggerBasic, Logger} from '../../src/util/logger';
 import TYPES from '../../src/types';
 
