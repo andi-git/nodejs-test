@@ -1,6 +1,6 @@
 import {injectable} from 'inversify';
 import 'reflect-metadata';
-import {Parking, ParkingModel} from '../model-db/parking';
+import {Parking, ParkingModel, ParkingRepository} from '../model-db/parking';
 import {Result, ResultBasic} from '../util/result';
 import {IdGenerator} from '../util/idGenerator';
 import {GeoLocation} from '../model/position';
@@ -28,39 +28,41 @@ export class ParkingServiceBasic implements ParkingService {
 
     logger: Logger;
     idGenerator: IdGenerator;
+    parkingRepository: ParkingRepository<Parking>;
 
     constructor(@inject(TYPES.Logger) logger: Logger,
-                @inject(TYPES.IdGenerator) idGenerator: IdGenerator) {
+                @inject(TYPES.IdGenerator) idGenerator: IdGenerator,
+                @inject(TYPES.ParkingRepository) parkingRepository: ParkingRepository<Parking>) {
         this.logger = logger;
         this.idGenerator = idGenerator;
+        this.parkingRepository = parkingRepository;
         logger.info('create ' + this.constructor.name);
     }
 
     public offer(user: User, geoLocation: GeoLocation): Result<Parking> {
-        let self = this;
         let result: Result<Parking> = new ResultBasic<Parking>();
         let parkingId = this.idGenerator.guid();
-        self.logger.info('offers parking ' + parkingId + ' at ' + geoLocation, user);
-        ParkingModel.find({user: user}).remove({}, (err) => {
-            self.logger.info('remove all parking-offer of user', user);
-            var parking = new ParkingModel({
-                parkingId: parkingId,
-                user: user.name,
-                date: Date.now(),
-                location: [geoLocation.latitude, geoLocation.longitude],
-                state: 'OFFER'
-            });
-            parking.save((err) => {
-                if (err) {
-                    self.logger.error(err, user);
-                    result.error();
-                }
-                else {
-                    self.logger.info('parking ' + parkingId + ' saved', user);
-                    result.success(parking);
-                }
-            });
+        this.logger.info('offers parking ' + parkingId + ' at ' + geoLocation, user);
+        var parkingOffered = new ParkingModel({
+            parkingId: parkingId,
+            user: user.name,
+            date: Date.now(),
+            location: [geoLocation.latitude, geoLocation.longitude],
+            state: 'OFFER'
         });
+        this.parkingRepository.removeByUser(user)
+            .onSuccess(() => {
+                this.parkingRepository.save(parkingOffered, user)
+                    .onSuccess((parking: Parking) => {
+                        result.success(parking);
+                    })
+                    .onError((parking: Parking) => {
+                        result.error(parking);
+                    });
+            })
+            .onError(() => {
+                result.error(null);
+            });
         return result;
     }
 
@@ -68,22 +70,24 @@ export class ParkingServiceBasic implements ParkingService {
         let self = this;
         let result: Result<Parking> = new ResultBasic<Parking>();
         self.logger.info('checks current offered parking', user);
-        ParkingModel.findOne({user: user.name}, {}, {sort: {'date': -1}}, (err, parking) => {
-            if (err) {
-                self.logger.error(err, user);
-                result.error();
-            } else {
+        this.parkingRepository.findOne(
+            {user: user.name},
+            null,
+            {'date': -1},
+            (parking: Parking) => {
                 self.logger.info('current offered parking is ' + parking, user);
                 result.success(parking);
-            }
-        });
+            },
+            (err: any) => {
+                self.logger.error(err, user);
+                result.error();
+            });
         return result;
     }
 
     public nearest(user: User, geoLocation: GeoLocation): Result<Parking> {
-        let self = this;
         let result: Result<Parking> = new ResultBasic<Parking>();
-        self.logger.info('checks nearest for ' + geoLocation, user);
+        this.logger.info('checks nearest for ' + geoLocation, user);
         this.parkings(geoLocation, 1, 100)
             .onSuccess((parkings: Array<Parking>) => {
                 result.success(parkings[0]);
@@ -95,9 +99,8 @@ export class ParkingServiceBasic implements ParkingService {
     }
 
     public near(user: User, geoLocation: GeoLocation): Result<Array<Parking>> {
-        let self = this;
         let result: Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
-        self.logger.info('checks near for ' + geoLocation, user);
+        this.logger.info('checks near for ' + geoLocation, user);
         this.parkings(geoLocation, 3, 100)
             .onSuccess((parkings: Array<Parking>) => {
                 result.success(parkings);
@@ -109,33 +112,37 @@ export class ParkingServiceBasic implements ParkingService {
     }
 
     public all(user: User): Result<Array<Parking>> {
-        let self = this;
         let result: Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
-        self.logger.info('get all parkings', user);
-        ParkingModel.find({}).sort('date').exec((err, parkings) => {
-            if (err) {
-                result.error();
-            } else {
+        this.logger.info('get all parkings', user);
+        this.parkingRepository.find(
+            {},
+            null,
+            'date',
+            (parkings: Parking[]) => {
                 result.success(parkings);
-            }
-        });
+            },
+            (err: any) => {
+                result.error(err);
+            });
         return result;
     }
 
     private parkings(geoLocation: GeoLocation, limit: number, maxDistance: number): Result<Array<Parking>> {
         let result: Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
-        ParkingModel.find({
-            location: {
-                $near: [geoLocation.latitude, geoLocation.longitude],
-                $maxDistance: maxDistance
-            }
-        }).limit(limit).exec((err, parkings) => {
-            if (err) {
-                result.error();
-            } else {
+        this.parkingRepository.find({
+                location: {
+                    $near: [geoLocation.latitude, geoLocation.longitude],
+                    $maxDistance: maxDistance
+                }
+            },
+            limit,
+            null,
+            (parkings: Parking[]) => {
                 result.success(parkings);
-            }
-        });
+            },
+            (err: any) => {
+                result.error(err);
+            });
         return result;
     }
 }

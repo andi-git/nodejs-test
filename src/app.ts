@@ -11,7 +11,7 @@ import 'reflect-metadata';
 import {Kernel} from 'inversify';
 import {GeoLocation} from './model/position';
 import {User} from './model/user';
-import {Parking} from './model-db/parking';
+import {Parking, ParkingRepository, ParkingRepositoryBasic} from './model-db/parking';
 import {Logger, LoggerBasic} from './util/logger';
 import {ParkingService, ParkingServiceBasic} from './service/parkingService';
 import {TestDataService, TestDataServiceBasic} from './service/testDataService';
@@ -25,6 +25,7 @@ kernel.bind<IdGenerator>(TYPES.IdGenerator).to(IdGeneratorBasic).inSingletonScop
 kernel.bind<Logger>(TYPES.Logger).to(LoggerBasic).inSingletonScope();
 kernel.bind<ParkingService>(TYPES.ParkingService).to(ParkingServiceBasic).inSingletonScope();
 kernel.bind<TestDataService>(TYPES.TestDataService).to(TestDataServiceBasic).inSingletonScope();
+kernel.bind<ParkingRepository<Parking>>(TYPES.ParkingRepository).to(ParkingRepositoryBasic).inSingletonScope();
 
 // some variables
 let version = '0.0.3';
