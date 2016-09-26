@@ -169,8 +169,13 @@ app.get('/elleho/' + version + '/parking', (request, response) => {
 
 // reset the test-data: clear the database and insert new data
 app.get('/elleho/' + version + '/parking/resettestdata', (request, response) => {
-    testDataService.resetParking();
-    response.send('Testdaten erneuert');
+    testDataService.resetParking()
+        .onSuccess((count: number) => {
+            response.send('Testdaten erneuert');
+        })
+        .onError(() => {
+            self.serverError('error on reset data for parkings', userFromRequest(request), response);
+        });
 });
 
 // run the server on port 9090

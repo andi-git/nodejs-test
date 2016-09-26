@@ -27,9 +27,13 @@ export const ParkingModel = mongoose.model<Parking>('Parking', ParkingSchema);
 
 export interface ParkingRepository<Parking> {
 
+    count(condition: Object): Result<number>;
+
     find(condition: Object, limit: number, sort: string, onSuccess: (parkings: Parking[]) => void, onError: (err: any) => void): void;
 
     findOne(condition: Object, limit: number, sort: Object, onSuccess: (parking: Parking) => void, onError: (err: any) => void): void;
+
+    removeAll(): Result<void>;
 
     removeByUser(user: User): Result<void>;
 
@@ -43,7 +47,22 @@ export class ParkingRepositoryBasic implements ParkingRepository<Parking> {
 
     constructor(@inject(TYPES.Logger) logger: Logger) {
         this.logger = logger;
-        logger.info('create ' + this.constructor.name);
+        this.logger.info('create ' + this.constructor.name);
+    }
+
+    count(condition: Object): Result<number> {
+        let self = this;
+        let result: Result<number> = new ResultBasic<number>();
+        ParkingModel.count(condition, function (err, count) {
+            if (err) {
+                self.logger.error('error on counting parkings: ' + err);
+                result.error(err);
+            } else {
+                self.logger.info('number of parkings: ' + count);
+                result.success(count);
+            }
+        });
+        return result;
     }
 
     findOne(condition: Object, limit: number, sort: Object, onSuccess: (parking: Parking) => void, onError: (err: any) => void): void {
@@ -88,16 +107,32 @@ export class ParkingRepositoryBasic implements ParkingRepository<Parking> {
         });
     }
 
+    removeAll(): Result<void> {
+        let self = this;
+        let result: Result<void> = new ResultBasic<void>();
+        ParkingModel.remove({}, function (err) {
+            if (err) {
+                self.logger.error('error on removing all parkings: ' + err);
+                result.error(err);
+            } else {
+                self.logger.info('remove all parkings');
+                result.success(null);
+            }
+        });
+        return result;
+    }
+
     removeByUser(user: User): Result<void> {
+        let self = this;
         let result: Result<void> = new ResultBasic<void>();
         ParkingModel
             .find({user: user})
             .remove({}, (err) => {
                 if (err) {
-                    this.logger.error('error on removing parking-offers of user', user);
+                    self.logger.error('error on removing parking-offers of user', user);
                     result.error();
                 } else {
-                    this.logger.info('removed all parking-offers of user', user);
+                    self.logger.info('removed all parking-offers of user', user);
                     result.success(null);
                 }
             });
@@ -105,13 +140,14 @@ export class ParkingRepositoryBasic implements ParkingRepository<Parking> {
     }
 
     save(parking: Parking, user: User): Result<Parking> {
+        let self = this;
         let result: Result<Parking> = new ResultBasic<Parking>();
         parking.save((err) => {
             if (err) {
-                this.logger.error(err, user);
+                self.logger.error(err, user);
                 result.error();
             } else {
-                this.logger.info('parking ' + parking.parkingId + ' saved', user);
+                self.logger.info('parking ' + parking.parkingId + ' saved', user);
                 result.success(parking);
             }
         });
