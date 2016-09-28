@@ -51,9 +51,9 @@ var serverError = function (message: string, user: User, response: Response) {
 let self = this;
 
 let app = express();
-// var bodyParser = require('body-parser');
-// app.use(bodyParser.urlencoded());
-// app.use(bodyParser.json());
+var bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded());
+app.use(bodyParser.json());
 
 // ping
 app.get('/ping', (request, response) => {
@@ -98,9 +98,9 @@ app.use((request, response, next) => {
 });
 
 // offer a new parking
-app.post('/elleho/' + version + '/parking/offer/:latitude/:longitude', (request, response) => {
+app.post('/elleho/' + version + '/parking/offer', (request, response) => {
     let user: User = userFromRequest(request);
-    let geoLocation: GeoLocation = new GeoLocation(request.params.latitude, request.params.longitude);
+    let geoLocation: GeoLocation = new GeoLocation(request.body.latitude, request.body.longitude);
     parkingService.offer(user, geoLocation)
         .onSuccess((parking: Parking) => {
             return response.json({
@@ -135,9 +135,9 @@ app.get('/elleho/' + version + '/parking/offer/current', (request, response) => 
 });
 
 // get the nearest parking with help of mongodb-function 'near'
-app.get('/elleho/' + version + '/parking/nearest/:latitude/:longitude', (request, response) => {
+app.put('/elleho/' + version + '/parking/nearest', (request, response) => {
     let user: User = userFromRequest(request);
-    let geoLocation: GeoLocation = new GeoLocation(request.params.latitude, request.params.longitude);
+    let geoLocation: GeoLocation = new GeoLocation(request.body.latitude, request.body.longitude);
     parkingService.nearest(user, geoLocation)
         .onSuccess((parking: Parking) => {
             return response.json(parking);
@@ -148,9 +148,9 @@ app.get('/elleho/' + version + '/parking/nearest/:latitude/:longitude', (request
 });
 
 // get all near parkings within 50m with help of mongodb-function 'near'
-app.get('/elleho/' + version + '/parking/near/:latitude/:longitude', (request, response) => {
+app.put('/elleho/' + version + '/parking/near', (request, response) => {
     let user: User = userFromRequest(request);
-    let geoLocation: GeoLocation = new GeoLocation(request.params.latitude, request.params.longitude);
+    let geoLocation: GeoLocation = new GeoLocation(request.body.latitude, request.body.longitude);
     parkingService.near(user, geoLocation)
         .onSuccess((parkings: Array<Parking>) => {
             return response.json(parkings);
@@ -172,7 +172,7 @@ app.get('/elleho/' + version + '/parking', (request, response) => {
 });
 
 // reset the test-data: clear the database and insert new data
-app.get('/elleho/' + version + '/parking/resettestdata', (request, response) => {
+app.post('/elleho/' + version + '/parking/resettestdata', (request, response) => {
     testDataService.resetParking()
         .onSuccess((count: number) => {
             response.send('Testdaten erneuert');
