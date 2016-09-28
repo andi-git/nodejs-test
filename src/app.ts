@@ -18,6 +18,8 @@ import {TestDataService, TestDataServiceBasic} from './service/testDataService';
 import {Response, Request} from 'express';
 import {IdGenerator, IdGeneratorBasic} from './util/idGenerator';
 import TYPES from './types';
+import {GoogleDistanceMatrixKey, GoogleDistanceMatrixKeyBasic} from "./util/googleDistanceMatrixKey";
+import {DistanceServiceBasic, DistanceService} from "./service/distanceService";
 
 // config inversify (dependency injection)
 var kernel = new Kernel();
@@ -26,6 +28,8 @@ kernel.bind<Logger>(TYPES.Logger).to(LoggerBasic).inSingletonScope();
 kernel.bind<ParkingService>(TYPES.ParkingService).to(ParkingServiceBasic).inSingletonScope();
 kernel.bind<TestDataService>(TYPES.TestDataService).to(TestDataServiceBasic).inSingletonScope();
 kernel.bind<ParkingRepository<Parking>>(TYPES.ParkingRepository).to(ParkingRepositoryBasic).inSingletonScope();
+kernel.bind<GoogleDistanceMatrixKey>(TYPES.GoogleDistanceMatrixKey).to(GoogleDistanceMatrixKeyBasic).inSingletonScope();
+kernel.bind<DistanceService>(TYPES.DistanceService).to(DistanceServiceBasic).inSingletonScope();
 
 // some variables
 let version = '0.0.3';

@@ -12,7 +12,9 @@ export interface Parking extends mongoose.Document {
     user: String,
     date: Date,
     location: {type: [Number], index: '2d'},
-    state: String
+    state: String,
+    meters: number,
+    seconds: number;
 }
 
 export const ParkingSchema = new mongoose.Schema({
@@ -20,7 +22,9 @@ export const ParkingSchema = new mongoose.Schema({
     user: {type: String, required: true},
     date: {type: Date, required: true},
     location: {type: [Number], index: '2d', required: true},
-    state: {type: String, required: true}
+    state: {type: String, required: true},
+    meters: {type: Number, required: false},
+    seconds: {type: Number, required: false}
 });
 
 export const ParkingModel = mongoose.model<Parking>('Parking', ParkingSchema);

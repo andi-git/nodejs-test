@@ -4,3 +4,4 @@ typings
 *.iml
 dist
 nodeunit-report
+conf
