@@ -6,6 +6,7 @@ import TYPES from "../types";
 import {inject} from "inversify";
 import {User} from "../model/user";
 import {ResultBasic, Result} from "../util/result";
+import {GeoLocation} from "../model/position";
 
 export interface Parking extends mongoose.Document {
     parkingId: String,
@@ -15,6 +16,7 @@ export interface Parking extends mongoose.Document {
     state: String,
     meters: number,
     seconds: number;
+    address: string;
 }
 
 export const ParkingSchema = new mongoose.Schema({
@@ -24,10 +26,18 @@ export const ParkingSchema = new mongoose.Schema({
     location: {type: [Number], index: '2d', required: true},
     state: {type: String, required: true},
     meters: {type: Number, required: false},
-    seconds: {type: Number, required: false}
+    seconds: {type: Number, required: false},
+    address: {type: String, required: false}
 });
 
 export const ParkingModel = mongoose.model<Parking>('Parking', ParkingSchema);
+
+export class Parkings {
+
+    public static asGeoLocation(parking:Parking):GeoLocation {
+        return new GeoLocation(parking.location[0], parking.location[1]);
+    }
+}
 
 export interface ParkingRepository<Parking> {
 

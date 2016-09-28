@@ -1,6 +1,6 @@
 import {injectable} from 'inversify';
 import 'reflect-metadata';
-import {Parking, ParkingModel, ParkingRepository} from '../model-db/parking';
+import {Parking, ParkingModel, ParkingRepository, Parkings} from '../model-db/parking';
 import {Result, ResultBasic} from '../util/result';
 import {IdGenerator} from '../util/idGenerator';
 import {GeoLocation} from '../model/position';
@@ -9,6 +9,8 @@ import {Logger} from '../util/logger';
 import TYPES from '../types';
 import {inject} from 'inversify';
 import 'reflect-metadata';
+import {DistanceService} from "./distanceService";
+import {Distance} from "../model/distance";
 
 export interface ParkingService {
 
@@ -29,13 +31,16 @@ export class ParkingServiceBasic implements ParkingService {
     logger: Logger;
     idGenerator: IdGenerator;
     parkingRepository: ParkingRepository<Parking>;
+    distanceService: DistanceService;
 
     constructor(@inject(TYPES.Logger) logger: Logger,
                 @inject(TYPES.IdGenerator) idGenerator: IdGenerator,
-                @inject(TYPES.ParkingRepository) parkingRepository: ParkingRepository<Parking>) {
+                @inject(TYPES.ParkingRepository) parkingRepository: ParkingRepository<Parking>,
+                @inject(TYPES.DistanceService) distanceService: DistanceService) {
         this.logger = logger;
         this.idGenerator = idGenerator;
         this.parkingRepository = parkingRepository;
+        this.distanceService = distanceService;
         logger.info('create ' + this.constructor.name);
     }
 
@@ -85,20 +90,50 @@ export class ParkingServiceBasic implements ParkingService {
         return result;
     }
 
-    public nearest(user: User, geoLocation: GeoLocation): Result<Parking> {
-        let result: Result<Parking> = new ResultBasic<Parking>();
-        this.logger.info('checks nearest for ' + geoLocation, user);
-        this.parkings(geoLocation, 1, 100)
-            .onSuccess((parkings: Array<Parking>) => {
-                result.success(parkings[0]);
+    public nearest(user:User, geoLocation:GeoLocation):Result<Parking> {
+        let self = this;
+        let result:Result<Parking> = new ResultBasic<Parking>();
+        this.logger.info('check nearest for ' + geoLocation, user);
+        // get 3 possible parkings from mongo-db
+        this.parkings(geoLocation, 3, 300)
+            .onSuccess((parkingsForLocation:Array<Parking>) => {
+                // get the real distance for all parkings
+                self.addRealDistanceToParkings(geoLocation, parkingsForLocation, user)
+                    .onSuccess((parkingsForLocationWithRealDistances: Array<Parking>) => {
+                        result.success(self.distanceService.sortParkingsByDistance(user, parkingsForLocationWithRealDistances, 1)[0]);
+                    })
+                    .onError((err: any) => {
+                        result.error(err);
+                    });
             })
-            .onError((parkings: Array<Parking>) => {
+            .onError(function (parkings:Array<Parking>) {
                 result.error(parkings[0]);
             });
         return result;
     }
 
     public near(user: User, geoLocation: GeoLocation): Result<Array<Parking>> {
+        let self = this;
+        let result: Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
+        this.logger.info('checks near for ' + geoLocation, user);
+        this.parkings(geoLocation, 5, 100)
+            .onSuccess((parkingsForLocation: Array<Parking>) => {
+                // get the real distance for all parkings
+                self.addRealDistanceToParkings(geoLocation, parkingsForLocation, user)
+                    .onSuccess((parkingsForLocationWithRealDistances: Array<Parking>) => {
+                        result.success(self.distanceService.sortParkingsByDistance(user, parkingsForLocationWithRealDistances, 3));
+                    })
+                    .onError((err: any) => {
+                        result.error(err);
+                    });
+            })
+            .onError((parkings: Array<Parking>) => {
+                result.error(parkings);
+            });
+        return result;
+    }
+
+    public near2(user: User, geoLocation: GeoLocation): Result<Array<Parking>> {
         let result: Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
         this.logger.info('checks near for ' + geoLocation, user);
         this.parkings(geoLocation, 3, 100)
@@ -143,6 +178,33 @@ export class ParkingServiceBasic implements ParkingService {
             (err: any) => {
                 result.error(err);
             });
+        return result;
+    }
+
+    private addRealDistanceToParkings(geoLocation: GeoLocation, parkings: Array<Parking>, user: User): Result<Array<Parking>> {
+        let self = this;
+        let result: Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
+        let newParkings: Array<Parking> = [];
+        let count: number = 0;
+        parkings.forEach(parking => {
+            this.logger.info('check real distance for parking: ' + parking.parkingId, user);
+            self.distanceService.distance(user, geoLocation, Parkings.asGeoLocation(parking))
+                .onSuccess(function (distance:Distance) {
+                    self.logger.info('set real distance for parking: ' + parking.parkingId, user);
+                    parking.meters = distance.meters;
+                    parking.seconds = distance.seconds;
+                    parking.address = distance.toAddress;
+                    newParkings.push(parking);
+                    count++;
+                    if (count === parkings.length) {
+                        result.success(newParkings);
+                    }
+                })
+                .onError(function () {
+                    self.logger.error("error on calculating distance between " + geoLocation + " and " + parking, user);
+                    result.error();
+                });
+        });
         return result;
     }
 }

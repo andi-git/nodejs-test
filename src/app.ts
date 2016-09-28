@@ -25,11 +25,11 @@ import {DistanceServiceBasic, DistanceService} from "./service/distanceService";
 var kernel = new Kernel();
 kernel.bind<IdGenerator>(TYPES.IdGenerator).to(IdGeneratorBasic).inSingletonScope();
 kernel.bind<Logger>(TYPES.Logger).to(LoggerBasic).inSingletonScope();
-kernel.bind<ParkingService>(TYPES.ParkingService).to(ParkingServiceBasic).inSingletonScope();
+kernel.bind<ParkingService>(TYPES.ParkingService).to(ParkingServiceBasic);
 kernel.bind<TestDataService>(TYPES.TestDataService).to(TestDataServiceBasic).inSingletonScope();
 kernel.bind<ParkingRepository<Parking>>(TYPES.ParkingRepository).to(ParkingRepositoryBasic).inSingletonScope();
 kernel.bind<GoogleDistanceMatrixKey>(TYPES.GoogleDistanceMatrixKey).to(GoogleDistanceMatrixKeyBasic).inSingletonScope();
-kernel.bind<DistanceService>(TYPES.DistanceService).to(DistanceServiceBasic).inSingletonScope();
+kernel.bind<DistanceService>(TYPES.DistanceService).to(DistanceServiceBasic);
 
 // some variables
 let version = '0.0.3';
@@ -43,7 +43,7 @@ mongoose.connect('mongodb://localhost:27017/test');
 mongoose.connection.on('error', console.error.bind(console, 'connection error:'));
 
 var serverError = function (message: string, user: User, response: Response) {
-    this.logger.error(message, user);
+    logger.error(message, user);
     response.writeHead(500);
     response.end();
 };
@@ -111,8 +111,8 @@ app.post('/elleho/' + version + '/parking/offer/:latitude/:longitude', (request,
                 longitude: parking.location[1]
             });
         })
-        .onError(function (parking: Parking) {
-            self.serverError('error on offer parking ' + parking, user, response);
+        .onError((err: any) => {
+            serverError('error on offer parking: ' + err, user, response);
         });
 });
 
@@ -129,8 +129,8 @@ app.get('/elleho/' + version + '/parking/offer/current', (request, response) => 
                 longitude: parking.location[1]
             });
         })
-        .onError((parking: Parking) => {
-            self.serverError('error on current parking ' + parking, user, response);
+        .onError((err: any) => {
+            serverError('error on current parking ' + err, user, response);
         });
 });
 
@@ -142,8 +142,8 @@ app.get('/elleho/' + version + '/parking/nearest/:latitude/:longitude', (request
         .onSuccess((parking: Parking) => {
             return response.json(parking);
         })
-        .onError((result: Parking) => {
-            self.serverError('error on nearest parking', user, response);
+        .onError((err: any) => {
+            serverError('error on nearest parking: ' + err, user, response);
         });
 });
 
@@ -155,8 +155,8 @@ app.get('/elleho/' + version + '/parking/near/:latitude/:longitude', (request, r
         .onSuccess((parkings: Array<Parking>) => {
             return response.json(parkings);
         })
-        .onError((result: Array<Parking>) => {
-            self.serverError('error on near parking', user, response);
+        .onError((err: any) => {
+            serverError('error on near parking: ' + err, user, response);
         });
 });
 
@@ -166,8 +166,8 @@ app.get('/elleho/' + version + '/parking', (request, response) => {
         .onSuccess((parkings: Array<Parking>) => {
             return response.json(parkings);
         })
-        .onError((result: Array<Parking>) => {
-            self.serverError('error on all parkings', userFromRequest(request), response);
+        .onError((err: any) => {
+            serverError('error on all parkings: ' + err, userFromRequest(request), response);
         });
 });
 
@@ -177,8 +177,8 @@ app.get('/elleho/' + version + '/parking/resettestdata', (request, response) => 
         .onSuccess((count: number) => {
             response.send('Testdaten erneuert');
         })
-        .onError(() => {
-            self.serverError('error on reset data for parkings', userFromRequest(request), response);
+        .onError((err: any) => {
+            serverError('error on reset data for parkings: ' + err, userFromRequest(request), response);
         });
 });
 
