@@ -182,9 +182,15 @@ app.post('/elleho/' + version + '/parking/resettestdata', (request, response) =>
         });
 });
 
-// run the server on port 9090
-app.listen(9090, function () {
-    console.log('Node.js (express) server listening on port %d in %s mode', 9090, app.settings.env);
+// run the server on a port specified in nodejs.port
+let port: string = '9090';
+let portFile = __dirname + '/../../conf/nodejs.port';
+var fs = require('fs');
+if (fs.existsSync(portFile) === true) {
+    port = fs.readFileSync(portFile, 'utf-8');
+}
+app.listen(port, function () {
+    console.log('Node.js (express) server listening on port %d in %s mode', port, app.settings.env);
 });
 
 function userFromRequest(request: Request): User {
