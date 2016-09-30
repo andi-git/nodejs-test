@@ -48,8 +48,6 @@ var serverError = function (message: string, user: User, response: Response) {
     response.end();
 };
 
-let self = this;
-
 let app = express();
 var bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded());
@@ -73,7 +71,6 @@ app.use((request, response, next) => {
 
 // interceptor for authorization
 app.use((request, response, next) => {
-    var fullUrl = request.protocol + '://' + request.get('host') + request.originalUrl;
     if (restResourceFromRequest(request) === '/parking/resettestdata' ||
         restResourceFromRequest(request) === '/parking') {
         next();
@@ -111,7 +108,7 @@ app.post('/elleho/' + version + '/parking/offer', (request, response) => {
 });
 
 // get the current offer of a user
-app.get('/elleho/' + version + '/parking/offer/current', (request, response) => {
+app.get('/elleho/' + version + '/parking/offer', (request, response) => {
     let user: User = userFromRequest(request);
     parkingService.current(user)
         .onSuccess((parking: Parking) => {
@@ -167,13 +164,9 @@ app.get('/elleho/' + version + '/parking', (request, response) => {
 
 // reset the test-data: clear the database and insert new data
 app.post('/elleho/' + version + '/parking/resettestdata', (request, response) => {
-    testDataService.resetParking()
-        .onSuccess((count: number) => {
-            response.send('Testdaten erneuert');
-        })
-        .onError((err: any) => {
-            serverError('error on reset data for parkings: ' + err, userFromRequest(request), response);
-        });
+    testDataService.resetParking();
+    response.type('text/plain');
+    response.send('Testdaten erneuert');
 });
 
 // run the server on a port specified in nodejs.port

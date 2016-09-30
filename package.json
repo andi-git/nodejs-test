@@ -18,7 +18,8 @@
     "ts-events": "^3.1.1",
     "tsd": "^0.6.5",
     "typescript": "^1.8.10",
-    "typescript-stl": "^1.0.6"
+    "typescript-stl": "^1.0.6",
+    "unirest": "^0.5.1"
   },
   "devDependencies": {
     "gulp": "^3.9.1",

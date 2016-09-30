@@ -16,7 +16,7 @@ exports.testPingGet = function (test) {
     api.get(test, '', { }, {
         status: 200
     }, function (res) {
-        test.equals('OK', res.body);
+        test.equals(res.body, 'OK');
         test.done();
     });
 };

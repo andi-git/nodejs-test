@@ -24,7 +24,14 @@
     "./test/unit/util/idGenerator.spec.ts",
     "./test/unit/util/logger.spec.ts",
     "./test/integration/conf/integrationtest.config.ts",
+    "./test/integration/conf/integrationtest.data.ts",
     "./test/integration/rest/ping/get.spec.ts",
+    "./test/integration/rest/parking/get.spec.ts",
+    "./test/integration/rest/parking/near/put.spec.ts",
+    "./test/integration/rest/parking/nearest/put.spec.ts",
+    "./test/integration/rest/parking/offer/post.spec.ts",
+    "./test/integration/rest/parking/offer/get.spec.ts",
+    "./test/integration/rest/parking/resettestdata/post.spec.ts",
     "node_modules/typescript/lib/lib.es7.d.ts"
   ]
 }

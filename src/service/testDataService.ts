@@ -9,7 +9,7 @@ import {Result, ResultBasic} from "../util/result";
 
 export interface TestDataService {
 
-    resetParking(): Result<number>;
+    resetParking();
 }
 
 @injectable()
@@ -28,9 +28,7 @@ export class TestDataServiceBasic implements TestDataService {
         logger.info('create ' + this.constructor.name);
     }
 
-    public resetParking(): Result<number> {
-        let result: Result<number> = new ResultBasic<number>();
-        var self = this;
+    public resetParking() {
         // clear schema
         this.parkingRepository.removeAll()
             .onSuccess(() => {
@@ -40,15 +38,11 @@ export class TestDataServiceBasic implements TestDataService {
                 this.saveParking('user3', new GeoLocation(48.214842, 16.353348));
                 this.saveParking('user4', new GeoLocation(48.221406, 16.352793));
                 this.saveParking('user5', new GeoLocation(48.254887, 16.415753));
-                this.parkingRepository.count({}).onSuccess((count: number) => {
-                    result.success(count);
-                });
             });
-        return result;
     }
 
-    private saveParking(user: string, geoLocation: GeoLocation) {
-        this.parkingRepository.save(new ParkingModel({
+    private saveParking(user: string, geoLocation: GeoLocation): Result<Parking> {
+        return this.parkingRepository.save(new ParkingModel({
             parkingId: this.idGenerator.guid(),
             user: user,
             date: Date.now(),
