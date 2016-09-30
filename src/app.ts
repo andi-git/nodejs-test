@@ -56,16 +56,10 @@ app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
 
 // ping
-app.get('/ping', (request, response) => {
+app.get('/elleho/' + version + '/ping', (request, response) => {
+    response.type('text/plain');
     response.writeHead(200);
     response.write('OK');
-    response.end();
-});
-
-// welcome
-app.get('/', (request, response) => {
-    response.writeHead(200);
-    response.write('Welcome to Node.js');
     response.end();
 });
 

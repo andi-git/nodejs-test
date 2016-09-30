@@ -23,6 +23,8 @@
     "./src/util/result.ts",
     "./test/unit/util/idGenerator.spec.ts",
     "./test/unit/util/logger.spec.ts",
+    "./test/integration/conf/integrationtest.config.ts",
+    "./test/integration/rest/ping/get.spec.ts",
     "node_modules/typescript/lib/lib.es7.d.ts"
   ]
 }

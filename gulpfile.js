@@ -7,6 +7,8 @@ var nodeunit = require('gulp-nodeunit');
 
 gulp.task('default', ['clean', 'compile-ts', 'nodeunit-test']);
 
+gulp.task('local', ['clean', 'compile-ts', 'nodeunit-test', 'nodeunit-integrationtest']);
+
 gulp.task('clean', function () {
     gutil.log('clean output');
     gulp.src('dist/*').pipe(clean());
@@ -21,6 +23,17 @@ gulp.task('compile-ts', ['clean'], function () {
 gulp.task('nodeunit-test', ['compile-ts'], function () {
     gutil.log('running tests with nodeunit');
     gulp.src('dist/test/unit/**/*.spec.js')
+        .pipe(nodeunit({
+            reporter: 'junit',
+            reporterOptions: {
+                output: 'nodeunit-report'
+            }
+        }));
+});
+
+gulp.task('nodeunit-integrationtest', ['nodeunit-test'], function () {
+    gutil.log('running integrationtests with nodeunit');
+    gulp.src('dist/test/integration/**/*.spec.js')
         .pipe(nodeunit({
             reporter: 'junit',
             reporterOptions: {
