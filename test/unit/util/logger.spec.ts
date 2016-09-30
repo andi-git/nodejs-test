@@ -34,13 +34,17 @@ function waitloop(njtest: any, callback: Function) {
 exports.groupOne = testCase({
 
     setUp: function (njcallback) {
-        logger.getLogEvent().attach(handler);
+        logger.getLogEventInfo().attach(handler);
+        logger.getLogEventWarning().attach(handler);
+        logger.getLogEventError().attach(handler);
         finish = false;
         njcallback();
     },
 
     tearDown: function (njcallback) {
-        logger.getLogEvent().detach(handler);
+        logger.getLogEventInfo().detach(handler);
+        logger.getLogEventWarning().detach(handler);
+        logger.getLogEventError().detach(handler);
         njcallback();
     },
 

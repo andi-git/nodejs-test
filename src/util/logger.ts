@@ -11,35 +11,63 @@ export interface Logger {
 
     error(message: string, user?: User);
 
-    getLogEvent(): AsyncEvent<string>;
+    getLogEventInfo(): AsyncEvent<string>;
+
+    getLogEventWarning(): AsyncEvent<string>;
+
+    getLogEventError(): AsyncEvent<string>;
 }
 
 @injectable()
 export class LoggerBasic implements Logger {
 
-    event = new AsyncEvent<string>();
+    eventInfo = new AsyncEvent<string>();
+    eventWarning = new AsyncEvent<string>();
+    eventError = new AsyncEvent<string>();
+    winston = require('winston');
 
     constructor() {
-        this.event.attach(function (message: string) {
-            console.log(message);
+        var logger = new (this.winston.Logger)({
+            exitOnError: false, //don't crash on exception
+            transports: [
+                new (this.winston.transports.Console)({}),
+                new (this.winston.transports.File)({filename: 'elleho.log'})
+            ]
+        });
+        this.eventInfo.attach(function (message: string) {
+            logger.info(message);
+        });
+        this.eventWarning.attach(function (message: string) {
+            logger.info(message);
+        });
+        this.eventError.attach(function (message: string) {
+            logger.info(message);
         });
         this.info('create ' + this.constructor.name);
     }
 
     public info(message: string, user?: User): void {
-        this.event.post(this.createMessage(LogLevel.INFO, message, user));
+        this.eventInfo.post(this.createMessage(LogLevel.INFO, message, user));
     }
 
     public warn(message: string, user?: User): void {
-        this.event.post(this.createMessage(LogLevel.WARN, message, user));
+        this.eventWarning.post(this.createMessage(LogLevel.WARN, message, user));
     }
 
     public error(message: string, user?: User): void {
-        this.event.post(this.createMessage(LogLevel.ERROR, message, user));
+        this.eventError.post(this.createMessage(LogLevel.ERROR, message, user));
     }
 
-    public getLogEvent(): AsyncEvent<string> {
-        return this.event;
+    public getLogEventInfo(): AsyncEvent<string> {
+        return this.eventInfo;
+    }
+
+    public getLogEventWarning(): AsyncEvent<string> {
+        return this.eventWarning;
+    }
+
+    public getLogEventError(): AsyncEvent<string> {
+        return this.eventError;
     }
 
     //noinspection JSMethodCanBeStatic
