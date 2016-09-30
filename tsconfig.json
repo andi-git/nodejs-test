@@ -21,8 +21,8 @@
     "./src/util/idGenerator.ts",
     "./src/util/logger.ts",
     "./src/util/result.ts",
-    "./test/util/idGenerator.spec.ts",
-    "./test/util/logger.spec.ts",
+    "./test/unit/util/idGenerator.spec.ts",
+    "./test/unit/util/logger.spec.ts",
     "node_modules/typescript/lib/lib.es7.d.ts"
   ]
 }

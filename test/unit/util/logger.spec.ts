@@ -1,9 +1,9 @@
 import std = require('typescript-stl');
 import 'reflect-metadata';
 import {Kernel} from 'inversify';
-import {LoggerBasic, Logger} from '../../src/util/logger';
-import TYPES from '../../src/types';
-import {User} from "../../src/model/user";
+import {LoggerBasic, Logger} from '../../../src/util/logger';
+import TYPES from '../../../src/types';
+import {User} from "../../../src/model/user";
 import {BaseEvent} from "ts-events";
 
 var kernel = new Kernel();

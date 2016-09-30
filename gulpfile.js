@@ -20,7 +20,7 @@ gulp.task('compile-ts', ['clean'], function () {
 
 gulp.task('nodeunit-test', ['compile-ts'], function () {
     gutil.log('running tests with nodeunit');
-    gulp.src('**/*.spec.js')
+    gulp.src('dist/test/unit/**/*.spec.js')
         .pipe(nodeunit({
             reporter: 'junit',
             reporterOptions: {

@@ -1,9 +1,9 @@
-import {IdGenerator, IdGeneratorBasic} from '../../src/util/idGenerator';
+import {IdGenerator, IdGeneratorBasic} from '../../../src/util/idGenerator';
 import std = require('typescript-stl');
 import 'reflect-metadata';
 import {Kernel} from 'inversify';
-import {LoggerBasic, Logger} from '../../src/util/logger';
-import TYPES from '../../src/types';
+import {LoggerBasic, Logger} from '../../../src/util/logger';
+import TYPES from '../../../src/types';
 
 var kernel = new Kernel();
 kernel.bind<Logger>(TYPES.Logger).to(LoggerBasic).inSingletonScope();
