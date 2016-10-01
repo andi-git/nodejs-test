@@ -7,7 +7,7 @@ var nodeunit = require('gulp-nodeunit');
 
 gulp.task('default', ['clean', 'compile-ts', 'nodeunit-test']);
 
-gulp.task('local', ['clean', 'compile-ts', 'nodeunit-test', 'nodeunit-integrationtest']);
+gulp.task('integration', ['clean', 'compile-ts', 'nodeunit-test', 'nodeunit-integrationtest']);
 
 gulp.task('clean', function () {
     gutil.log('clean output');

@@ -1,6 +1,6 @@
 import std = require('typescript-stl');
 import 'reflect-metadata';
-import {IntegrationtestConfig} from "../../../conf/integrationtest.config";
+import {IntegrationtestConfig} from "../../../data/integrationtest.config";
 
 var api = require('nodeunit-httpclient').create({
         port: IntegrationtestConfig.port(),
