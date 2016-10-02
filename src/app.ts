@@ -73,7 +73,8 @@ app.use((request, response, next) => {
 app.use((request, response, next) => {
     if (restResourceFromRequest(request) === '/ping' ||
         restResourceFromRequest(request) === '/parking' ||
-        restResourceFromRequest(request) === '/parking/resettestdata') {
+        restResourceFromRequest(request) === '/parking/resettestdata' ||
+        restResourceFromRequest(request) === 'noSecurity') {
         next();
     } else {
         // authenticate the user
@@ -187,5 +188,9 @@ function userFromRequest(request: Request): User {
 
 function restResourceFromRequest(request: Request): string {
     let split: Array<string> = request.originalUrl.split('/');
-    return request.originalUrl.substr(split[0].length + split[1].length + split[2].length + 2);
+    if (split.length >= 2) {
+        return request.originalUrl.substr(split[0].length + split[1].length + split[2].length + 2);
+    } else {
+        return 'noSecurity';
+    }
 }
