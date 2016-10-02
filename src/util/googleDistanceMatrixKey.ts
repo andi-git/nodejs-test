@@ -28,6 +28,7 @@ export class GoogleDistanceMatrixKeyBasic implements GoogleDistanceMatrixKey {
                     result.error(err);
                 } else {
                     let key = data.toString();
+                    key = (key.substr(0, key.indexOf('|') ));
                     this.logger.info('read GoogleDistanceMatrixKey from ' + file + ': ' + key, user);
                     result.success(key);
                 }

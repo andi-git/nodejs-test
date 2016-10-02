@@ -42,7 +42,7 @@ export class DistanceServiceBasic implements DistanceService {
                 this.googleDistanceMatrix.matrix(origins, destinations, function (err, distances) {
                     if (err) {
                         self.logger.error("error on distances between " + from + " and " + to + ": " + err, user);
-                        distanceResult.error();
+                        distanceResult.error(err);
                     }
                     if (!distances) {
                         self.logger.error("no distances between " + from + " and " + to, user);
