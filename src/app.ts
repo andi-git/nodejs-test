@@ -65,7 +65,7 @@ app.get('/elleho/' + version + '/ping', (request, response) => {
 app.use((request, response, next) => {
     var fullUrl = request.protocol + '://' + request.get('host') + request.originalUrl;
     var ip = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
-    logger.info(ip + ' calls ' + fullUrl);
+    logger.info(ip + ' calls ' + fullUrl, userFromRequest(request));
     next();
 });
 

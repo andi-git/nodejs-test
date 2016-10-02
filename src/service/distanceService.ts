@@ -49,6 +49,7 @@ export class DistanceServiceBasic implements DistanceService {
                         distanceResult.error();
                     }
                     if (distances.status == 'OK') {
+                        self.logger.error("distance status for " + from + " to " + to + ' is OK', user);
                         for (var i = 0; i < origins.length; i++) {
                             for (var j = 0; j < destinations.length; j++) {
                                 var fromAddress = distances.origin_addresses[i];
@@ -66,6 +67,8 @@ export class DistanceServiceBasic implements DistanceService {
                                 }
                             }
                         }
+                    } else {
+                        self.logger.error("distance status for " + from + " to " + to + ' is NOT OK: ' + distances.status, user);
                     }
                 });
             })
