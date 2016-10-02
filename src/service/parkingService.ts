@@ -90,13 +90,13 @@ export class ParkingServiceBasic implements ParkingService {
         return result;
     }
 
-    public nearest(user:User, geoLocation:GeoLocation):Result<Parking> {
+    public nearest(user: User, geoLocation: GeoLocation): Result<Parking> {
         let self = this;
-        let result:Result<Parking> = new ResultBasic<Parking>();
+        let result: Result<Parking> = new ResultBasic<Parking>();
         this.logger.info('check nearest for ' + geoLocation, user);
         // get 3 possible parkings from mongo-db
         this.parkings(geoLocation, 3, 300)
-            .onSuccess((parkingsForLocation:Array<Parking>) => {
+            .onSuccess((parkingsForLocation: Array<Parking>) => {
                 // get the real distance for all parkings
                 self.addRealDistanceToParkings(geoLocation, parkingsForLocation, user)
                     .onSuccess((parkingsForLocationWithRealDistances: Array<Parking>) => {
@@ -106,7 +106,7 @@ export class ParkingServiceBasic implements ParkingService {
                         result.error(err);
                     });
             })
-            .onError(function (parkings:Array<Parking>) {
+            .onError(function (parkings: Array<Parking>) {
                 result.error(parkings[0]);
             });
         return result;
@@ -126,19 +126,6 @@ export class ParkingServiceBasic implements ParkingService {
                     .onError((err: any) => {
                         result.error(err);
                     });
-            })
-            .onError((parkings: Array<Parking>) => {
-                result.error(parkings);
-            });
-        return result;
-    }
-
-    public near2(user: User, geoLocation: GeoLocation): Result<Array<Parking>> {
-        let result: Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
-        this.logger.info('checks near for ' + geoLocation, user);
-        this.parkings(geoLocation, 3, 100)
-            .onSuccess((parkings: Array<Parking>) => {
-                result.success(parkings);
             })
             .onError((parkings: Array<Parking>) => {
                 result.error(parkings);
@@ -185,26 +172,29 @@ export class ParkingServiceBasic implements ParkingService {
         let self = this;
         let result: Result<Array<Parking>> = new ResultBasic<Array<Parking>>();
         let newParkings: Array<Parking> = [];
-        let count: number = 0;
-        parkings.forEach(parking => {
-            this.logger.info('check real distance for parking: ' + parking.parkingId, user);
-            self.distanceService.distance(user, geoLocation, Parkings.asGeoLocation(parking))
-                .onSuccess(function (distance:Distance) {
-                    self.logger.info('set real distance for parking: ' + parking.parkingId, user);
-                    parking.meters = distance.meters;
-                    parking.seconds = distance.seconds;
-                    parking.address = distance.toAddress;
-                    newParkings.push(parking);
-                    count++;
-                    if (count === parkings.length) {
-                        result.success(newParkings);
-                    }
-                })
-                .onError(function () {
-                    self.logger.error("error on calculating distance between " + geoLocation + " and " + parking, user);
-                    result.error();
-                });
-        });
+        require('async').each(parkings,
+            function (parking, callback) {
+                self.logger.info('add real distance to parking: ' + parking.parkingId, user);
+                self.distanceService.distance(user, geoLocation, Parkings.asGeoLocation(parking))
+                    .onSuccess(function (distance: Distance) {
+                        self.logger.info('got real distance for parking: ' + parking.parkingId + ': ' + distance.meters + ' meters', user);
+                        parking.meters = distance.meters;
+                        parking.seconds = distance.seconds;
+                        parking.address = distance.toAddress;
+                        newParkings.push(parking);
+                        callback();
+                    })
+                    .onError(function (err) {
+                        self.logger.error("error on calculating distance between " + geoLocation + " and " + parking, user);
+                        callback(err);
+                    });
+            }, function (err) {
+                if (err) {
+                    result.error(err);
+                } else {
+                    result.success(newParkings);
+                }
+            });
         return result;
     }
 }
