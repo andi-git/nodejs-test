@@ -3,7 +3,7 @@ Just to test nodejs with mongodb...
 
 # Installation (Ubuntu 14.04)
 **node / npm / ts**<br>
-`sudo apt-get install nodejs`<br>
+`sudo apt-get install nodejs` (or via nvm)<br>
 `sudo apt-get install npm`<br>
 `npm install` (in the directory where package.json is located)<br>
 `tsd install`<br>

@@ -6,6 +6,7 @@ var http = require('http');
 
 var api = require('nodeunit-httpclient').create({
         port: IntegrationtestConfig.port(),
+        host: IntegrationtestConfig.host(),
         path: IntegrationtestConfig.pathPrefix() + '/ping',
         headers: {'content-type': 'text/plain; charset=utf-8'}
     }

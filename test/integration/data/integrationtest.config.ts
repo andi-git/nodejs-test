@@ -1,18 +1,18 @@
 export class IntegrationtestConfig {
 
     public static port(): string {
-        return this.getFileContent(__dirname + '/../../../../test/integrationtest/conf/integrationtest.port', '9000');
+        return this.getProperty('port', '9000');
     }
 
     public static host(): string {
-        return this.getFileContent(__dirname + '/../../../../test/integrationtest/conf/integrationtest.host', 'localhost');
+        return this.getProperty('host', 'localhost');
     }
 
     public static version(): string {
-        return this.getFileContent(__dirname + '/../../../../test/integrationtest/conf/integrationtest.version', '0.0.3');
+        return this.getProperty('version', '0.1.0');
     }
 
-    public static pathPrefix(): string {
+    public static pathPrefixWithHostAndUrl(): string {
         return 'http://'
             + IntegrationtestConfig.host()
             + ':'
@@ -21,12 +21,18 @@ export class IntegrationtestConfig {
             + IntegrationtestConfig.version();
     }
 
-    private static getFileContent(file: string, defaultValue: string): string {
-        let value: string = defaultValue;
-        var fs = require('fs');
-        if (fs.existsSync(file) === true) {
-            value = fs.readFileSync(file, 'utf-8');
+    public static pathPrefix(): string {
+        return '/elleho/' + IntegrationtestConfig.version();
+    }
+
+    private static getProperty(key: string, defaultValue: string): string {
+        let PropertiesReader = require('properties-reader');
+        let properties = PropertiesReader(__dirname + '/../../../../test/integration/data/integrationtest.properties');
+        let value = properties.get(key);
+        if (value) {
+            return value;
+        } else {
+            return defaultValue;
         }
-        return value;
     }
 }

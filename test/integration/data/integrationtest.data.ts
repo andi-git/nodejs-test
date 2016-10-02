@@ -3,7 +3,7 @@ import {IntegrationtestConfig} from "./integrationtest.config";
 export class IntegrationtestData {
 
     public static resetParkingData(afterResetParkingData: Function) {
-        require('unirest').post(IntegrationtestConfig.pathPrefix() + '/parking/resettestdata')
+        require('unirest').post(IntegrationtestConfig.pathPrefixWithHostAndUrl() + '/parking/resettestdata')
             .headers({})
             .send({})
             .end(function (response) {
@@ -12,7 +12,7 @@ export class IntegrationtestData {
     }
 
     public static insertParking(afterInsertParking: Function) {
-        require('unirest').post(IntegrationtestConfig.pathPrefix() + '/parking/offer')
+        require('unirest').post(IntegrationtestConfig.pathPrefixWithHostAndUrl() + '/parking/offer')
             .headers({
                 username: 'elle',
                 password: 'ho'

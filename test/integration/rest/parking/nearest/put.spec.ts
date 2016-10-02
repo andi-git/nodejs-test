@@ -5,6 +5,7 @@ import {IntegrationtestData} from "../../../data/integrationtest.data";
 
 var api = require('nodeunit-httpclient').create({
         port: IntegrationtestConfig.port(),
+        host: IntegrationtestConfig.host(),
         path: IntegrationtestConfig.pathPrefix() + '/parking/nearest',
         headers: {'content-type': 'application/json; charset=utf-8'}
     }

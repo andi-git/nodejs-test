@@ -32,7 +32,7 @@ kernel.bind<GoogleDistanceMatrixKey>(TYPES.GoogleDistanceMatrixKey).to(GoogleDis
 kernel.bind<DistanceService>(TYPES.DistanceService).to(DistanceServiceBasic);
 
 // some variables
-let version = '0.0.3';
+let version = '0.1.1';
 let logger: Logger = kernel.get<Logger>(TYPES.Logger);
 let parkingService: ParkingService = kernel.get<ParkingService>(TYPES.ParkingService);
 let testDataService: TestDataService = kernel.get<TestDataService>(TYPES.TestDataService);
@@ -71,8 +71,9 @@ app.use((request, response, next) => {
 
 // interceptor for authorization
 app.use((request, response, next) => {
-    if (restResourceFromRequest(request) === '/parking/resettestdata' ||
-        restResourceFromRequest(request) === '/parking') {
+    if (restResourceFromRequest(request) === '/ping' ||
+        restResourceFromRequest(request) === '/parking' ||
+        restResourceFromRequest(request) === '/parking/resettestdata') {
         next();
     } else {
         // authenticate the user
@@ -170,7 +171,7 @@ app.post('/elleho/' + version + '/parking/resettestdata', (request, response) =>
 });
 
 // run the server on a port specified in nodejs.port
-let port: string = '9090';
+let port: string = '9000';
 let portFile = __dirname + '/../../conf/nodejs.port';
 var fs = require('fs');
 if (fs.existsSync(portFile) === true) {
