@@ -13,7 +13,7 @@ var api = require('nodeunit-httpclient').create({
 
 exports.testNearestParking = function (test) {
 
-    IntegrationtestData.resetParkingData(() => {
+    IntegrationtestData.resetTestData(() => {
         IntegrationtestData.insertParking(() => {
             test.expect(9);
             api.put(test, '', {
@@ -29,12 +29,12 @@ exports.testNearestParking = function (test) {
                 status: 200
             }, function (res) {
                 test.ok(res.body.includes('"address":"Laudongasse 43, 1080 Wien, Austria"'));
-                test.ok(res.body.includes('"seconds":163'));
-                test.ok(res.body.includes('"meters":713'));
+                test.ok(res.body.includes('"seconds":16'));
+                test.ok(res.body.includes('"meters":71'));
                 test.ok(res.body.includes('48.213125'));
                 test.ok(res.body.includes('16.34582'));
                 test.ok(res.body.includes('OFFER'));
-                test.ok(res.body.includes('user2'));
+                test.ok(res.body.includes('user'));
                 test.done();
             });
         });

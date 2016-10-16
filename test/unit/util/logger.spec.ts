@@ -3,13 +3,15 @@ import 'reflect-metadata';
 import {Kernel} from 'inversify';
 import {LoggerBasic, Logger} from '../../../src/util/logger';
 import TYPES from '../../../src/types';
-import {User} from "../../../src/model/user";
+import {User} from "../../../src/model-db/user";
 
 var kernel = new Kernel();
 kernel.bind<Logger>(TYPES.Logger).to(LoggerBasic).inSingletonScope();
 let logger: Logger = kernel.get<Logger>(TYPES.Logger);
 
-let user: User = new User('testuser');
+let user: User = <User>{
+    username: 'testuser'
+};
 
 var testCase = require('nodeunit').testCase;
 

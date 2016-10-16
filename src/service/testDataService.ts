@@ -6,10 +6,11 @@ import TYPES from '../types';
 import {inject, injectable} from 'inversify';
 import 'reflect-metadata';
 import {Result, ResultBasic} from "../util/result";
+import {UserModel, UserRepository, User} from "../model-db/user";
 
 export interface TestDataService {
 
-    resetParking();
+    resetAll();
 }
 
 @injectable()
@@ -17,37 +18,171 @@ export class TestDataServiceBasic implements TestDataService {
 
     logger: Logger;
     idGenerator: IdGenerator;
-    parkingRepository: ParkingRepository<Parking>;
+    userRepository: UserRepository;
+    parkingRepository: ParkingRepository;
 
     constructor(@inject(TYPES.Logger) logger: Logger,
                 @inject(TYPES.IdGenerator) idGenerator: IdGenerator,
-                @inject(TYPES.ParkingRepository) parkingRepository: ParkingRepository<Parking>) {
+                @inject(TYPES.UserRepository) userRepository: UserRepository,
+                @inject(TYPES.ParkingRepository) parkingRepository: ParkingRepository) {
         this.logger = logger;
         this.idGenerator = idGenerator;
+        this.userRepository = userRepository;
         this.parkingRepository = parkingRepository;
         logger.info('create ' + this.constructor.name);
     }
 
-    public resetParking() {
+    public resetAll(): Result<void> {
+        let result: Result<void> = new ResultBasic<void>();
+        this.resetUser().onSuccess(() => {
+            this.resetParking().onSuccess(() => {
+                result.success(null);
+            });
+        });
+        return result;
+    }
+
+    private resetUser(): Result<void> {
+        let self = this;
+        let result: Result<void> = new ResultBasic<void>();
+        // clear schema
+        this.userRepository.removeAll()
+            .onSuccess(() => {
+                let usersToCreate: Array<UserToCreate> = [];
+                usersToCreate.push(new UserToCreate('elle', 'elleho', 'App', 'ho', 'elle@ho.com', '1234567890', 'Opel', 'Astra', 'medium', 'Wien', '1000', 'MyStreet 1'));
+                usersToCreate.push(new UserToCreate('test', 'test', 'User', '123', 'test@user.com', '0987654321', 'Ford', 'Galaxy', 'large', 'Wien', '1001', 'Backstreet 6'));
+                usersToCreate.push(new UserToCreate('user1', 'user', 'one', '123', 'user1@test.com', '1', 'VW', 'Golf', 'mdeium', 'Wien', '1000', 'Street 1'));
+                usersToCreate.push(new UserToCreate('user2', 'user', 'two', '123', 'user2@test.com', '2', 'VW', 'Golf', 'mdeium', 'Wien', '1000', 'Street 2'));
+                usersToCreate.push(new UserToCreate('user3', 'user', 'three', '123', 'user3@test.com', '3', 'VW', 'Golf', 'mdeium', 'Wien', '1000', 'Street 3'));
+                usersToCreate.push(new UserToCreate('user4', 'user', 'four', '123', 'user4@test.com', '4', 'VW', 'Golf', 'mdeium', 'Wien', '1000', 'Street 4'));
+                usersToCreate.push(new UserToCreate('user5', 'user', 'five', '123', 'user5@test.com', '5', 'VW', 'Golf', 'mdeium', 'Wien', '1000', 'Street 5'));
+                require('async').each(usersToCreate,
+                    function (userToCreate, callback) {
+                        self.saveUser(userToCreate).onSuccess(() => {
+                            callback();
+                        }).onError((err: any) => {
+                            callback(err);
+                        })
+                    }, function (err) {
+                        if (err) {
+                            result.error(err);
+                        } else {
+                            result.success(null);
+                        }
+                    });
+            });
+        return result;
+    }
+
+    private resetParking(): Result<void> {
+        let self = this;
+        let result: Result<void> = new ResultBasic<void>();
         // clear schema
         this.parkingRepository.removeAll()
             .onSuccess(() => {
-                // add entries to schema
-                this.saveParking('user1', new GeoLocation(48.213678, 16.348490));
-                this.saveParking('user2', new GeoLocation(48.213125, 16.345820));
-                this.saveParking('user3', new GeoLocation(48.214842, 16.353348));
-                this.saveParking('user4', new GeoLocation(48.221406, 16.352793));
-                this.saveParking('user5', new GeoLocation(48.254887, 16.415753));
+                let parkingsToCreate: Array<ParkingToCreate> = [];
+                parkingsToCreate.push(new ParkingToCreate(this.idGenerator.guid(), 'user1', new GeoLocation(48.213678, 16.348490)));
+                parkingsToCreate.push(new ParkingToCreate(this.idGenerator.guid(), 'user2', new GeoLocation(48.213125, 16.345820)));
+                parkingsToCreate.push(new ParkingToCreate(this.idGenerator.guid(), 'user3', new GeoLocation(48.214842, 16.353348)));
+                parkingsToCreate.push(new ParkingToCreate(this.idGenerator.guid(), 'user4', new GeoLocation(48.221406, 16.352793)));
+                parkingsToCreate.push(new ParkingToCreate(this.idGenerator.guid(), 'user5', new GeoLocation(48.254887, 16.415753)));
+                require('async').each(parkingsToCreate,
+                    function (parkingToCreate, callback) {
+                        console.log('get user ' + parkingToCreate.username + ' to add parking ' + parkingToCreate.parkingId);
+                        self.userRepository.findUserByUsername(parkingToCreate.username)
+                            .onSuccess((user: User) => {
+                                self.saveParking(parkingToCreate, user).onSuccess(() => {
+                                    callback();
+                                }).onError((err: any) => {
+                                    callback(err);
+                                })
+                            })
+                            .onError((err) => {
+                                callback(err);
+                            });
+                    }, function (err) {
+                        if (err) {
+                            result.error(err);
+                        } else {
+                            result.success(null);
+                        }
+                    });
+
             });
+        return result;
     }
 
-    private saveParking(user: string, geoLocation: GeoLocation): Result<Parking> {
-        return this.parkingRepository.save(new ParkingModel({
-            parkingId: this.idGenerator.guid(),
-            user: user,
-            date: Date.now(),
-            location: [geoLocation.latitude, geoLocation.longitude],
-            state: 'OFFER'
+    private saveUser(userToCreate: UserToCreate): Result<User> {
+        return this.userRepository.save(new UserModel({
+            username: userToCreate.username,
+            firstname: userToCreate.firstname,
+            lastname: userToCreate.lastname,
+            password: userToCreate.password,
+            email: userToCreate.email,
+            paypal: userToCreate.paypal,
+            cartype: userToCreate.cartype,
+            carbrand: userToCreate.carbrand,
+            carcategory: userToCreate.carcategory,
+            city: userToCreate.city,
+            zip: userToCreate.zip,
+            street: userToCreate.street
         }), null);
+    }
+
+    private saveParking(parkingToCreate: ParkingToCreate, user: User): Result<Parking> {
+        return this.parkingRepository.save(new ParkingModel({
+            parkingId: parkingToCreate.parkingId,
+            user: user,
+            date: parkingToCreate.date,
+            location: parkingToCreate.location,
+            state: parkingToCreate.state
+        }), null);
+    }
+}
+
+export class UserToCreate {
+    username: string;
+    firstname: string;
+    lastname: string;
+    password: string;
+    email: string;
+    paypal: string;
+    cartype: string;
+    carbrand: string;
+    carcategory: string;
+    city: string;
+    zip: string;
+    street: string;
+
+    constructor(username: string, firstname: string, lastname: string, password: string, email: string, paypal: string, cartype: string, carbrand: string, carcategory: string, city: string, zip: string, street: string) {
+        this.username = username;
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.password = password;
+        this.email = email;
+        this.paypal = paypal;
+        this.cartype = cartype;
+        this.carbrand = carbrand;
+        this.carcategory = carcategory;
+        this.city = city;
+        this.zip = zip;
+        this.street = street;
+    }
+}
+
+export class ParkingToCreate {
+
+    parkingId: string;
+    username: string;
+    date: number;
+    location: any;
+    state: string;
+
+    constructor(parkingId: string, username: string, geoLocation: GeoLocation) {
+        this.parkingId = parkingId;
+        this.username = username;
+        this.date = Date.now();
+        this.location = [geoLocation.latitude, geoLocation.longitude];
+        this.state = 'OFFER';
     }
 }

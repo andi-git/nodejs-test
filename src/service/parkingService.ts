@@ -4,7 +4,7 @@ import {Parking, ParkingModel, ParkingRepository, Parkings} from '../model-db/pa
 import {Result, ResultBasic} from '../util/result';
 import {IdGenerator} from '../util/idGenerator';
 import {GeoLocation} from '../model/position';
-import {User} from '../model/user';
+import {User} from '../model-db/user';
 import {Logger} from '../util/logger';
 import TYPES from '../types';
 import {inject} from 'inversify';
@@ -30,12 +30,12 @@ export class ParkingServiceBasic implements ParkingService {
 
     logger: Logger;
     idGenerator: IdGenerator;
-    parkingRepository: ParkingRepository<Parking>;
+    parkingRepository: ParkingRepository;
     distanceService: DistanceService;
 
     constructor(@inject(TYPES.Logger) logger: Logger,
                 @inject(TYPES.IdGenerator) idGenerator: IdGenerator,
-                @inject(TYPES.ParkingRepository) parkingRepository: ParkingRepository<Parking>,
+                @inject(TYPES.ParkingRepository) parkingRepository: ParkingRepository,
                 @inject(TYPES.DistanceService) distanceService: DistanceService) {
         this.logger = logger;
         this.idGenerator = idGenerator;
@@ -50,7 +50,7 @@ export class ParkingServiceBasic implements ParkingService {
         this.logger.info('offers parking ' + parkingId + ' at ' + geoLocation, user);
         var parkingOffered = new ParkingModel({
             parkingId: parkingId,
-            user: user.name,
+            user: user,
             date: Date.now(),
             location: [geoLocation.latitude, geoLocation.longitude],
             state: 'OFFER'
@@ -76,11 +76,11 @@ export class ParkingServiceBasic implements ParkingService {
         let result: Result<Parking> = new ResultBasic<Parking>();
         self.logger.info('checks current offered parking', user);
         this.parkingRepository.findOne(
-            {user: user.name},
+            {user: user._id},
             null,
             {'date': -1},
             (parking: Parking) => {
-                self.logger.info('current offered parking is ' + parking, user);
+                self.logger.info('current offered parking is ' + parking._id, user);
                 result.success(parking);
             },
             (err: any) => {

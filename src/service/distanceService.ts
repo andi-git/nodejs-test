@@ -1,7 +1,7 @@
 import {Result, ResultBasic} from "../util/result";
 import {Logger} from "../util/logger";
 import {GeoLocation} from "../model/position";
-import {User} from "../model/user";
+import {User} from "../model-db/user";
 import {Distance} from "../model/distance";
 import {GoogleDistanceMatrixKey} from "../util/googleDistanceMatrixKey";
 import {Parking} from "../model-db/parking";

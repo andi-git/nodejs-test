@@ -4,13 +4,14 @@ import {injectable} from "inversify";
 import {Logger} from "../util/logger";
 import TYPES from "../types";
 import {inject} from "inversify";
-import {User} from "../model/user";
+import {User} from "../model-db/user";
 import {ResultBasic, Result} from "../util/result";
 import {GeoLocation} from "../model/position";
+import {Schema} from "mongoose";
 
 export interface Parking extends mongoose.Document {
-    parkingId: String,
-    user: String,
+    parkingId: String, // TODO replace this id with _id
+    user: User,
     date: Date,
     location: {type: [Number], index: '2d'},
     state: String,
@@ -21,7 +22,7 @@ export interface Parking extends mongoose.Document {
 
 export const ParkingSchema = new mongoose.Schema({
     parkingId: {type: String, required: true},
-    user: {type: String, required: true},
+    user: {type: Schema.Types.ObjectId, ref:'User', required: false},
     date: {type: Date, required: true},
     location: {type: [Number], index: '2d', required: true},
     state: {type: String, required: true},
@@ -39,7 +40,7 @@ export class Parkings {
     }
 }
 
-export interface ParkingRepository<Parking> {
+export interface ParkingRepository {
 
     count(condition: Object): Result<number>;
 
@@ -55,7 +56,7 @@ export interface ParkingRepository<Parking> {
 }
 
 @injectable()
-export class ParkingRepositoryBasic implements ParkingRepository<Parking> {
+export class ParkingRepositoryBasic implements ParkingRepository {
 
     private logger: Logger;
 

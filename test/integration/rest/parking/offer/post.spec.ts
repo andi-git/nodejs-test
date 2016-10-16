@@ -13,7 +13,7 @@ var api = require('nodeunit-httpclient').create({
 
 exports.testOfferParking = function (test) {
 
-    IntegrationtestData.resetParkingData(() => {
+    IntegrationtestData.resetTestData(() => {
         test.expect(5);
         api.post(test, '', {
             headers: {

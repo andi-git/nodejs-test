@@ -1,7 +1,7 @@
 import {injectable} from 'inversify';
 import 'reflect-metadata';
 import {AsyncEvent} from 'ts-events/dist/lib/index';
-import {User} from '../model/user';
+import {User} from '../model-db/user';
 
 export interface Logger {
 
@@ -72,7 +72,7 @@ export class LoggerBasic implements Logger {
 
     //noinspection JSMethodCanBeStatic
     private createMessage(logLevel: LogLevel, message: string, user?: User): string {
-        let username: string = user != null ? user.name : 'undefined';
+        let username: string = user != null ? user.username : 'undefined';
         return new Date().toISOString() + ' ' + this.getLogLevelString(logLevel) + ' | ' + username + ': ' + message;
     }
 

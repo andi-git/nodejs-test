@@ -10,7 +10,7 @@ import express = require('express');
 import 'reflect-metadata';
 import {Kernel} from 'inversify';
 import {GeoLocation} from './model/position';
-import {User} from './model/user';
+import {User, UserRepository, UserRepositoryBasic} from './model-db/user';
 import {Parking, ParkingRepository, ParkingRepositoryBasic} from './model-db/parking';
 import {Logger, LoggerBasic} from './util/logger';
 import {ParkingService, ParkingServiceBasic} from './service/parkingService';
@@ -20,29 +20,34 @@ import {IdGenerator, IdGeneratorBasic} from './util/idGenerator';
 import TYPES from './types';
 import {GoogleDistanceMatrixKey, GoogleDistanceMatrixKeyBasic} from "./util/googleDistanceMatrixKey";
 import {DistanceServiceBasic, DistanceService} from "./service/distanceService";
+import {UserServiceBasic, UserService} from "./service/userService";
+import {Result, ResultBasic} from "./util/result";
 
 // config inversify (dependency injection)
 var kernel = new Kernel();
 kernel.bind<IdGenerator>(TYPES.IdGenerator).to(IdGeneratorBasic).inSingletonScope();
 kernel.bind<Logger>(TYPES.Logger).to(LoggerBasic).inSingletonScope();
 kernel.bind<ParkingService>(TYPES.ParkingService).to(ParkingServiceBasic);
+kernel.bind<UserService>(TYPES.UserService).to(UserServiceBasic);
 kernel.bind<TestDataService>(TYPES.TestDataService).to(TestDataServiceBasic).inSingletonScope();
-kernel.bind<ParkingRepository<Parking>>(TYPES.ParkingRepository).to(ParkingRepositoryBasic).inSingletonScope();
+kernel.bind<ParkingRepository>(TYPES.ParkingRepository).to(ParkingRepositoryBasic).inSingletonScope();
+kernel.bind<UserRepository>(TYPES.UserRepository).to(UserRepositoryBasic).inSingletonScope();
 kernel.bind<GoogleDistanceMatrixKey>(TYPES.GoogleDistanceMatrixKey).to(GoogleDistanceMatrixKeyBasic).inSingletonScope();
 kernel.bind<DistanceService>(TYPES.DistanceService).to(DistanceServiceBasic);
 
 // some variables
-let version = '0.1.1';
+let version = '0.1.2';
 let logger: Logger = kernel.get<Logger>(TYPES.Logger);
 let parkingService: ParkingService = kernel.get<ParkingService>(TYPES.ParkingService);
 let testDataService: TestDataService = kernel.get<TestDataService>(TYPES.TestDataService);
+let userService: UserService = kernel.get<UserService>(TYPES.UserService);
 
 // mongodb (with mongoose) connection
 var mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost:27017/test');
 mongoose.connection.on('error', console.error.bind(console, 'connection error:'));
 
-var serverError = function (message: string, user: User, response: Response) {
+var serverError = function (response: Response, message: string, user?: User) {
     logger.error(message, user);
     response.writeHead(500);
     response.end();
@@ -65,110 +70,163 @@ app.get('/elleho/' + version + '/ping', (request, response) => {
 app.use((request, response, next) => {
     var fullUrl = request.protocol + '://' + request.get('host') + request.originalUrl;
     var ip = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
-    logger.info(ip + ' calls ' + fullUrl, userFromRequest(request));
+    logger.info(ip + ' calls ' + fullUrl + ', username: ' + request.get('username'));
     next();
 });
 
 // interceptor for authorization
 app.use((request, response, next) => {
     if (restResourceFromRequest(request) === '/ping' ||
+        restResourceFromRequest(request) === '/resettestdata' ||
         restResourceFromRequest(request) === '/parking' ||
         restResourceFromRequest(request) === '/parking/resettestdata' ||
+        restResourceFromRequest(request) === '/user' ||
+        restResourceFromRequest(request) === '/user/resettestdata' ||
         restResourceFromRequest(request) === 'noSecurity') {
         next();
     } else {
         // authenticate the user
         let username = request.get('username');
         let password = request.get('password');
-        if ((username === 'test' && password === '1234') || (username === 'elle' && password === 'ho')) {
-            next();
-        } else {
-            logger.warn('wrong password: ' + password, new User(username));
-            response.writeHead(401);
-            response.end();
-        }
+        userService.checkPassword(username, password)
+            .onSuccess((user: User) => {
+                next();
+            })
+            .onError((err: any) => {
+                logger.warn('wrong password: ' + password + 'for username ' + username);
+                response.writeHead(401);
+                response.end();
+            });
     }
 });
 
 // offer a new parking
 app.post('/elleho/' + version + '/parking/offer', (request, response) => {
-    let user: User = userFromRequest(request);
-    let geoLocation: GeoLocation = new GeoLocation(request.body.latitude, request.body.longitude);
-    parkingService.offer(user, geoLocation)
-        .onSuccess((parking: Parking) => {
-            return response.json({
-                user: parking.user,
-                parkingId: parking.parkingId,
-                state: parking.state,
-                latitude: parking.location[0],
-                longitude: parking.location[1]
-            });
+    getUser(request)
+        .onSuccess((user: User) => {
+            let geoLocation: GeoLocation = new GeoLocation(request.body.latitude, request.body.longitude);
+            parkingService.offer(user, geoLocation)
+                .onSuccess((parking: Parking) => {
+                    return response.json({
+                        user: parking.user,
+                        parkingId: parking.parkingId,
+                        state: parking.state,
+                        latitude: parking.location[0],
+                        longitude: parking.location[1]
+                    });
+                })
+                .onError((err: any) => {
+                    serverError(response, 'error on offer parking: ' + err, user);
+                });
         })
         .onError((err: any) => {
-            serverError('error on offer parking: ' + err, user, response);
+            serverError(response, 'error on offer parking: ' + err);
         });
 });
 
 // get the current offer of a user
 app.get('/elleho/' + version + '/parking/offer', (request, response) => {
-    let user: User = userFromRequest(request);
-    parkingService.current(user)
-        .onSuccess((parking: Parking) => {
-            return response.json({
-                user: parking.user,
-                parkingId: parking.parkingId,
-                state: parking.state,
-                latitude: parking.location[0],
-                longitude: parking.location[1]
-            });
+    getUser(request)
+        .onSuccess((user: User) => {
+            parkingService.current(user)
+                .onSuccess((parking: Parking) => {
+                    return response.json({
+                        user: parking.user,
+                        parkingId: parking.parkingId,
+                        state: parking.state,
+                        latitude: parking.location[0],
+                        longitude: parking.location[1]
+                    });
+                })
+                .onError((err: any) => {
+                    serverError(response, 'error on current parking ' + err, user);
+                });
         })
         .onError((err: any) => {
-            serverError('error on current parking ' + err, user, response);
+            serverError(response, 'error on current parking ' + err);
         });
 });
 
 // get the nearest parking with help of mongodb-function 'near'
 app.put('/elleho/' + version + '/parking/nearest', (request, response) => {
-    let user: User = userFromRequest(request);
-    let geoLocation: GeoLocation = new GeoLocation(request.body.latitude, request.body.longitude);
-    parkingService.nearest(user, geoLocation)
-        .onSuccess((parking: Parking) => {
-            return response.json(parking);
+    getUser(request)
+        .onSuccess((user: User) => {
+            let geoLocation: GeoLocation = new GeoLocation(request.body.latitude, request.body.longitude);
+            parkingService.nearest(user, geoLocation)
+                .onSuccess((parking: Parking) => {
+                    return response.json(parking);
+                })
+                .onError((err: any) => {
+                    serverError(response, 'error on nearest parking: ' + err, user);
+                });
         })
         .onError((err: any) => {
-            serverError('error on nearest parking: ' + err, user, response);
+            serverError(response, 'error on nearest parking ' + err);
         });
 });
 
 // get all near parkings within 50m with help of mongodb-function 'near'
 app.put('/elleho/' + version + '/parking/near', (request, response) => {
-    let user: User = userFromRequest(request);
-    let geoLocation: GeoLocation = new GeoLocation(request.body.latitude, request.body.longitude);
-    parkingService.near(user, geoLocation)
-        .onSuccess((parkings: Array<Parking>) => {
-            return response.json(parkings);
+    getUser(request)
+        .onSuccess((user: User) => {
+            let geoLocation: GeoLocation = new GeoLocation(request.body.latitude, request.body.longitude);
+            parkingService.near(user, geoLocation)
+                .onSuccess((parkings: Array<Parking>) => {
+                    return response.json(parkings);
+                })
+                .onError((err: any) => {
+                    serverError(response, 'error on near parking: ' + err, user);
+                });
         })
         .onError((err: any) => {
-            serverError('error on near parking: ' + err, user, response);
+            serverError(response, 'error on near parking ' + err);
         });
 });
 
 // get all parkings in the database
 app.get('/elleho/' + version + '/parking', (request, response) => {
-    parkingService.all(userFromRequest(request))
-        .onSuccess((parkings: Array<Parking>) => {
-            return response.json(parkings);
+    getUser(request)
+        .onSuccess((user: User) => {
+            parkingService.all(user)
+                .onSuccess((parkings: Array<Parking>) => {
+                    return response.json(parkings);
+                })
+                .onError((err: any) => {
+                    serverError(response, 'error on all parkings: ' + err, user);
+                });
         })
         .onError((err: any) => {
-            serverError('error on all parkings: ' + err, userFromRequest(request), response);
+            serverError(response, 'error on all parkings ' + err);
         });
 });
 
-// reset the test-data: clear the database and insert new data
-app.post('/elleho/' + version + '/parking/resettestdata', (request, response) => {
-    testDataService.resetParking();
-    response.type('text/plain');
-    response.send('Testdaten erneuert');
+// get all parkings in the database
+app.get('/elleho/' + version + '/user', (request, response) => {
+    getUser(request)
+        .onSuccess((user: User) => {
+            userService.all(user)
+                .onSuccess((users: Array<User>) => {
+                    return response.json(users);
+                })
+                .onError((err: any) => {
+                    serverError(response, 'error on all parkings: ' + err, user);
+                });
+        })
+        .onError((err: any) => {
+            serverError(response, 'error on all parkings ' + err);
+        });
+});
+
+// reset the test-data for user: clear the database-entries and insert new data
+app.post('/elleho/' + version + '/resettestdata', (request, response) => {
+    testDataService.resetAll()
+        .onSuccess(() => {
+            response.type('text/plain');
+            response.send('alle Testdaten erneuert');
+        })
+        .onError((err: any) => {
+            serverError(response, 'error on resetting testdata ' + err);
+        });
 });
 
 // run the server on a port specified in nodejs.port
@@ -182,8 +240,18 @@ app.listen(port, function () {
     console.log('Node.js (express) server listening on port %d in %s mode', port, app.settings.env);
 });
 
-function userFromRequest(request: Request): User {
-    return new User(request.get('username'));
+function getUser(request: Request): Result<User> {
+    let result: Result<User> = new ResultBasic<User>();
+    let username = request.get('username');
+    let password = request.get('password');
+    userService.getUserByUserame(username)
+        .onSuccess((user: User) => {
+            result.success(user);
+        })
+        .onError((err: any) => {
+            result.error(err);
+        });
+    return result;
 }
 
 function restResourceFromRequest(request: Request): string {

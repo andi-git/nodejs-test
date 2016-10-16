@@ -2,12 +2,12 @@ import {IntegrationtestConfig} from "./integrationtest.config";
 
 export class IntegrationtestData {
 
-    public static resetParkingData(afterResetParkingData: Function) {
-        require('unirest').post(IntegrationtestConfig.pathPrefixWithHostAndUrl() + '/parking/resettestdata')
+    public static resetTestData(afterResetTestData: Function) {
+        require('unirest').post(IntegrationtestConfig.pathPrefixWithHostAndUrl() + '/resettestdata')
             .headers({})
             .send({})
             .end(function (response) {
-                afterResetParkingData.call(this);
+                afterResetTestData.call(this);
             });
     }
 

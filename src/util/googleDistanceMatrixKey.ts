@@ -2,7 +2,7 @@ import {injectable, inject} from "inversify";
 import TYPES from "../types";
 import {Logger} from "./logger";
 import {Result, ResultBasic} from "./result";
-import {User} from "../model/user";
+import {User} from "../model-db/user";
 
 export interface GoogleDistanceMatrixKey {
 

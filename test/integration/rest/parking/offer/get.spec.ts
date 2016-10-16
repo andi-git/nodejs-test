@@ -13,7 +13,7 @@ var api = require('nodeunit-httpclient').create({
 
 exports.testGetCurrent = function (test) {
 
-    IntegrationtestData.resetParkingData(() => {
+    IntegrationtestData.resetTestData(() => {
         IntegrationtestData.insertParking(() => {
             test.expect(5);
             api.get(test, '', {
