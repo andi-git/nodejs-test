@@ -198,20 +198,99 @@ app.get('/elleho/' + version + '/parking', (request, response) => {
         });
 });
 
-// get all parkings in the database
+// get all users from the database
 app.get('/elleho/' + version + '/user', (request, response) => {
     getUser(request)
         .onSuccess((user: User) => {
+            logger.info('getting all users', user);
             userService.all(user)
                 .onSuccess((users: Array<User>) => {
                     return response.json(users);
                 })
                 .onError((err: any) => {
-                    serverError(response, 'error on all parkings: ' + err, user);
+                    serverError(response, 'error on getting all users: ' + err, user);
                 });
         })
         .onError((err: any) => {
-            serverError(response, 'error on all parkings ' + err);
+            serverError(response, 'error on getting all user ' + err);
+        });
+});
+
+// get a user by it's username
+app.get('/elleho/' + version + '/user/find/username/:username', (request, response) => {
+    getUser(request)
+        .onSuccess((user: User) => {
+            logger.info('getting user by username "' + request.params.username + '"', user);
+            return response.json(user);
+        })
+        .onError((err: any) => {
+            serverError(response, 'error on getting user by username ' + err);
+        });
+});
+
+// get a user by it's email
+app.get('/elleho/' + version + '/user/find/email/:email', (request, response) => {
+    getUser(request)
+        .onSuccess((user: User) => {
+            userService.getUserByEmail(request.params.email)
+                .onSuccess((user: User) => {
+                    return response.json(user);
+                })
+                .onError((err: any) => {
+                    serverError(response, 'error on getting user by email ' + err, user);
+                });
+        })
+        .onError((err: any) => {
+            serverError(response, 'error on getting user by email ' + err);
+        });
+});
+
+// insert a new user to the database
+app.post('/elleho/' + version + '/user', (request, response) => {
+    getUser(request)
+        .onSuccess((user: User) => {
+            logger.info('add a new user', user);
+            userService.save(request.body.user, user)
+                .onSuccess((user: User) => {
+                    return response.json(user);
+                })
+                .onError((err: any) => {
+                    serverError(response, 'error on saving new user: ' + err, user);
+                });
+        })
+        .onError((err: any) => {
+            serverError(response, 'error on saving new user ' + err);
+        });
+});
+
+// update an existing user
+app.put('/elleho/' + version + '/user', (request, response) => {
+    getUser(request)
+        .onSuccess((user: User) => {
+            logger.info('update an existing user', user);
+            userService.update(
+                request.body.user.username,
+                request.body.user.firstname,
+                request.body.user.lastname,
+                request.body.user.password,
+                request.body.user.email,
+                request.body.user.paypal,
+                request.body.user.cartype,
+                request.body.user.carbrand,
+                request.body.user.carcategory,
+                request.body.user.city,
+                request.body.user.zip,
+                request.body.user.street,
+                user)
+                .onSuccess((user: User) => {
+                    return response.json(user);
+                })
+                .onError((err: any) => {
+                    serverError(response, 'error on updating user: ' + err, user);
+                });
+        })
+        .onError((err: any) => {
+            serverError(response, 'error on updating user ' + err);
         });
 });
 

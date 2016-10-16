@@ -6,7 +6,7 @@ import {Logger} from '../util/logger';
 import TYPES from '../types';
 import {inject} from 'inversify';
 import 'reflect-metadata';
-import {UserRepository} from "../model-db/user";
+import {UserModel, UserRepository} from "../model-db/user";
 
 export interface UserService {
 
@@ -15,6 +15,24 @@ export interface UserService {
     all(currentUser: User): Result<Array<User>>;
 
     getUserByUserame(username: string): Result<User>;
+
+    getUserByEmail(email: string): Result<User>;
+
+    save(userAttributes: Object, currentUser: User): Result<User>;
+
+    update(username: string,
+           firstname: string,
+           lastname: string,
+           password: string,
+           email: string,
+           paypal: string,
+           cartype: string,
+           carbrand: string,
+           carcategory: string,
+           city: string,
+           zip: string,
+           street: string,
+           currentUser: User): Result<User>;
 }
 
 @injectable()
@@ -35,8 +53,8 @@ export class UserServiceBasic implements UserService {
     }
 
     public all(currentUser: User): Result<Array<User>> {
-            let result: Result<Array<User>> = new ResultBasic<Array<User>>();
-        this.logger.info('get all parkings', currentUser);
+        let result: Result<Array<User>> = new ResultBasic<Array<User>>();
+        this.logger.info('get all users', currentUser);
         this.userRepository.find(
             {},
             null,
@@ -52,5 +70,41 @@ export class UserServiceBasic implements UserService {
 
     public getUserByUserame(username: string): Result<User> {
         return this.userRepository.findUserByUsername(username);
+    }
+
+    public getUserByEmail(email: string): Result<User> {
+        return this.userRepository.findUserByEmail(email);
+    }
+
+    public save(userAttributes: Object, currentUser: User): Result<User> {
+        return this.userRepository.save(new UserModel(userAttributes), currentUser);
+    }
+
+    public update(username: string,
+                  firstname: string,
+                  lastname: string,
+                  password: string,
+                  email: string,
+                  paypal: string,
+                  cartype: string,
+                  carbrand: string,
+                  carcategory: string,
+                  city: string,
+                  zip: string,
+                  street: string,
+                  currentUser: User): Result<User> {
+        return this.userRepository.update(username,
+            firstname,
+            lastname,
+            password,
+            email,
+            paypal,
+            cartype,
+            carbrand,
+            carcategory,
+            city,
+            zip,
+            street,
+            currentUser);
     }
 }

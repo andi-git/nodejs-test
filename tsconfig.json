@@ -33,6 +33,10 @@
     "./test/integration/rest/parking/offer/post.spec.ts",
     "./test/integration/rest/parking/offer/get.spec.ts",
     "./test/integration/rest/user/get.spec.ts",
+    "./test/integration/rest/user/post.spec.ts",
+    "./test/integration/rest/user/put.spec.ts",
+    "./test/integration/rest/user/find/username/get.spec.ts",
+    "./test/integration/rest/user/find/email/get.spec.ts",
     "node_modules/typescript/lib/lib.es7.d.ts"
   ]
 }
