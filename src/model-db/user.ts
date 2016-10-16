@@ -5,7 +5,7 @@ import TYPES from "../types";
 import {inject} from "inversify";
 import {Parking} from "./parking";
 import {Schema} from "mongoose";
-import {AbstractRepository, AbstractRepositoryBasic} from "./modelHelper";
+import {Repository, AbstractRepository} from "./modelHelper";
 import {Result, ResultBasic} from "../util/result";
 
 export interface User extends mongoose.Document {
@@ -42,7 +42,7 @@ export const UserSchema = new mongoose.Schema({
 
 export const UserModel = mongoose.model<User>('User', UserSchema);
 
-export interface UserRepository extends AbstractRepository<User> {
+export interface UserRepository extends Repository<User> {
 
     findUserByUsernameAndPassword(username: string, password: string): Result<User>;
 
@@ -50,7 +50,7 @@ export interface UserRepository extends AbstractRepository<User> {
 }
 
 @injectable()
-export class UserRepositoryBasic extends AbstractRepositoryBasic<User> implements UserRepository {
+export class UserRepositoryBasic extends AbstractRepository<User> implements UserRepository {
 
     constructor(@inject(TYPES.Logger) logger: Logger) {
         super(logger, UserModel, 'user');

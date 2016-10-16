@@ -7,7 +7,7 @@ import {User} from "./user";
 import {injectable, inject, unmanaged} from "inversify";
 import TYPES from "../types";
 
-export interface AbstractRepository<T extends mongoose.Document> {
+export interface Repository<T extends mongoose.Document> {
 
     count(condition: Object): Result<number>;
 
@@ -23,7 +23,7 @@ export interface AbstractRepository<T extends mongoose.Document> {
 }
 
 @injectable()
-export abstract class AbstractRepositoryBasic<T extends mongoose.Document> implements AbstractRepository<T> {
+export abstract class AbstractRepository<T extends mongoose.Document> implements Repository<T> {
 
     protected logger: Logger;
 
