@@ -16,7 +16,6 @@ import {Logger, LoggerBasic} from './util/logger';
 import {ParkingService, ParkingServiceBasic} from './service/parkingService';
 import {TestDataService, TestDataServiceBasic} from './service/testDataService';
 import {Response, Request} from 'express';
-import {IdGenerator, IdGeneratorBasic} from './util/idGenerator';
 import TYPES from './types';
 import {GoogleDistanceMatrixKey, GoogleDistanceMatrixKeyBasic} from "./util/googleDistanceMatrixKey";
 import {DistanceServiceBasic, DistanceService} from "./service/distanceService";
@@ -25,7 +24,6 @@ import {Result, ResultBasic} from "./util/result";
 
 // config inversify (dependency injection)
 var kernel = new Kernel();
-kernel.bind<IdGenerator>(TYPES.IdGenerator).to(IdGeneratorBasic).inSingletonScope();
 kernel.bind<Logger>(TYPES.Logger).to(LoggerBasic).inSingletonScope();
 kernel.bind<ParkingService>(TYPES.ParkingService).to(ParkingServiceBasic);
 kernel.bind<UserService>(TYPES.UserService).to(UserServiceBasic);
@@ -89,10 +87,10 @@ app.use((request, response, next) => {
         let username = request.get('username');
         let password = request.get('password');
         userService.checkPassword(username, password)
-            .onSuccess((user: User) => {
+            .onSuccess(() => {
                 next();
             })
-            .onError((err: any) => {
+            .onError(() => {
                 logger.warn('wrong password: ' + password + 'for username ' + username);
                 response.writeHead(401);
                 response.end();
@@ -109,7 +107,7 @@ app.post('/elleho/' + version + '/parking/offer', (request, response) => {
                 .onSuccess((parking: Parking) => {
                     return response.json({
                         user: parking.user,
-                        parkingId: parking.parkingId,
+                        parkingId: parking._id,
                         state: parking.state,
                         latitude: parking.location[0],
                         longitude: parking.location[1]
@@ -132,7 +130,7 @@ app.get('/elleho/' + version + '/parking/offer', (request, response) => {
                 .onSuccess((parking: Parking) => {
                     return response.json({
                         user: parking.user,
-                        parkingId: parking.parkingId,
+                        parkingId: parking._id,
                         state: parking.state,
                         latitude: parking.location[0],
                         longitude: parking.location[1]

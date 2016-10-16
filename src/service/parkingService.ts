@@ -2,7 +2,6 @@ import {injectable} from 'inversify';
 import 'reflect-metadata';
 import {Parking, ParkingModel, ParkingRepository, Parkings} from '../model-db/parking';
 import {Result, ResultBasic} from '../util/result';
-import {IdGenerator} from '../util/idGenerator';
 import {GeoLocation} from '../model/position';
 import {User} from '../model-db/user';
 import {Logger} from '../util/logger';
@@ -29,16 +28,13 @@ export interface ParkingService {
 export class ParkingServiceBasic implements ParkingService {
 
     logger: Logger;
-    idGenerator: IdGenerator;
     parkingRepository: ParkingRepository;
     distanceService: DistanceService;
 
     constructor(@inject(TYPES.Logger) logger: Logger,
-                @inject(TYPES.IdGenerator) idGenerator: IdGenerator,
                 @inject(TYPES.ParkingRepository) parkingRepository: ParkingRepository,
                 @inject(TYPES.DistanceService) distanceService: DistanceService) {
         this.logger = logger;
-        this.idGenerator = idGenerator;
         this.parkingRepository = parkingRepository;
         this.distanceService = distanceService;
         logger.info('create ' + this.constructor.name);
@@ -46,10 +42,7 @@ export class ParkingServiceBasic implements ParkingService {
 
     public offer(user: User, geoLocation: GeoLocation): Result<Parking> {
         let result: Result<Parking> = new ResultBasic<Parking>();
-        let parkingId = this.idGenerator.guid();
-        this.logger.info('offers parking ' + parkingId + ' at ' + geoLocation, user);
         var parkingOffered = new ParkingModel({
-            parkingId: parkingId,
             user: user,
             date: Date.now(),
             location: [geoLocation.latitude, geoLocation.longitude],
@@ -59,6 +52,7 @@ export class ParkingServiceBasic implements ParkingService {
             .onSuccess(() => {
                 this.parkingRepository.save(parkingOffered, user)
                     .onSuccess((parking: Parking) => {
+                        this.logger.info('offers parking ' + parking._id + ' at ' + geoLocation, user);
                         result.success(parking);
                     })
                     .onError((parking: Parking) => {

@@ -1,5 +1,4 @@
 import mongoose = require('mongoose');
-import {Query} from "mongoose";
 import {injectable} from "inversify";
 import {Logger} from "../util/logger";
 import TYPES from "../types";
@@ -11,7 +10,6 @@ import {Schema} from "mongoose";
 import {Repository, AbstractRepository} from "./modelHelper";
 
 export interface Parking extends mongoose.Document {
-    parkingId: String, // TODO replace this id with _id
     user: User,
     date: Date,
     location: {type: [Number], index: '2d'},
@@ -22,7 +20,6 @@ export interface Parking extends mongoose.Document {
 }
 
 export const ParkingSchema = new mongoose.Schema({
-    parkingId: {type: String, required: true},
     user: {type: Schema.Types.ObjectId, ref:'User', required: false},
     date: {type: Date, required: true},
     location: {type: [Number], index: '2d', required: true},

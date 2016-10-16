@@ -76,7 +76,6 @@ export class UserRepositoryBasic extends AbstractRepository<User> implements Use
     }
 
     public findUserByUsername(username: string): Result<User> {
-        console.log('find user by username ' + username);
         let self = this;
         let result: Result<User> = new ResultBasic<User>();
         this.findOne(

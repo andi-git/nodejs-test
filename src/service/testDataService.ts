@@ -1,5 +1,4 @@
 import {ParkingModel, ParkingRepository, Parking} from '../model-db/parking';
-import {IdGenerator} from '../util/idGenerator';
 import {Logger} from '../util/logger';
 import {GeoLocation} from '../model/position';
 import TYPES from '../types';
@@ -17,16 +16,13 @@ export interface TestDataService {
 export class TestDataServiceBasic implements TestDataService {
 
     logger: Logger;
-    idGenerator: IdGenerator;
     userRepository: UserRepository;
     parkingRepository: ParkingRepository;
 
     constructor(@inject(TYPES.Logger) logger: Logger,
-                @inject(TYPES.IdGenerator) idGenerator: IdGenerator,
                 @inject(TYPES.UserRepository) userRepository: UserRepository,
                 @inject(TYPES.ParkingRepository) parkingRepository: ParkingRepository) {
         this.logger = logger;
-        this.idGenerator = idGenerator;
         this.userRepository = userRepository;
         this.parkingRepository = parkingRepository;
         logger.info('create ' + this.constructor.name);
@@ -81,14 +77,13 @@ export class TestDataServiceBasic implements TestDataService {
         this.parkingRepository.removeAll()
             .onSuccess(() => {
                 let parkingsToCreate: Array<ParkingToCreate> = [];
-                parkingsToCreate.push(new ParkingToCreate(this.idGenerator.guid(), 'user1', new GeoLocation(48.213678, 16.348490)));
-                parkingsToCreate.push(new ParkingToCreate(this.idGenerator.guid(), 'user2', new GeoLocation(48.213125, 16.345820)));
-                parkingsToCreate.push(new ParkingToCreate(this.idGenerator.guid(), 'user3', new GeoLocation(48.214842, 16.353348)));
-                parkingsToCreate.push(new ParkingToCreate(this.idGenerator.guid(), 'user4', new GeoLocation(48.221406, 16.352793)));
-                parkingsToCreate.push(new ParkingToCreate(this.idGenerator.guid(), 'user5', new GeoLocation(48.254887, 16.415753)));
+                parkingsToCreate.push(new ParkingToCreate('user1', new GeoLocation(48.213678, 16.348490)));
+                parkingsToCreate.push(new ParkingToCreate('user2', new GeoLocation(48.213125, 16.345820)));
+                parkingsToCreate.push(new ParkingToCreate('user3', new GeoLocation(48.214842, 16.353348)));
+                parkingsToCreate.push(new ParkingToCreate('user4', new GeoLocation(48.221406, 16.352793)));
+                parkingsToCreate.push(new ParkingToCreate('user5', new GeoLocation(48.254887, 16.415753)));
                 require('async').each(parkingsToCreate,
                     function (parkingToCreate, callback) {
-                        console.log('get user ' + parkingToCreate.username + ' to add parking ' + parkingToCreate.parkingId);
                         self.userRepository.findUserByUsername(parkingToCreate.username)
                             .onSuccess((user: User) => {
                                 self.saveParking(parkingToCreate, user).onSuccess(() => {
@@ -131,7 +126,6 @@ export class TestDataServiceBasic implements TestDataService {
 
     private saveParking(parkingToCreate: ParkingToCreate, user: User): Result<Parking> {
         return this.parkingRepository.save(new ParkingModel({
-            parkingId: parkingToCreate.parkingId,
             user: user,
             date: parkingToCreate.date,
             location: parkingToCreate.location,
@@ -172,14 +166,12 @@ export class UserToCreate {
 
 export class ParkingToCreate {
 
-    parkingId: string;
     username: string;
     date: number;
     location: any;
     state: string;
 
-    constructor(parkingId: string, username: string, geoLocation: GeoLocation) {
-        this.parkingId = parkingId;
+    constructor(username: string, geoLocation: GeoLocation) {
         this.username = username;
         this.date = Date.now();
         this.location = [geoLocation.latitude, geoLocation.longitude];

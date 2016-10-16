@@ -24,7 +24,7 @@ exports.testGetParkings = function (test) {
             }, {
                 status: 200
             }, function (res) {
-                test.equals((res.body.match(/parkingId/g) || []).length, 6);
+                test.equals((res.body.match(/_id/g) || []).length, 6);
                 test.done();
             });
         });
