@@ -21,6 +21,8 @@ import {GoogleDistanceMatrixKey, GoogleDistanceMatrixKeyBasic} from "./util/goog
 import {DistanceServiceBasic, DistanceService} from "./service/distanceService";
 import {UserServiceBasic, UserService} from "./service/userService";
 import {Result, ResultBasic} from "./util/result";
+import {TrackingRepositoryBasic, TrackingRepository, Tracking} from "./model-db/tracking";
+import {TrackingServiceBasic, TrackingService} from "./service/trackingService";
 
 // config inversify (dependency injection)
 var kernel = new Kernel();
@@ -28,17 +30,20 @@ kernel.bind<Logger>(TYPES.Logger).to(LoggerBasic).inSingletonScope();
 kernel.bind<ParkingService>(TYPES.ParkingService).to(ParkingServiceBasic);
 kernel.bind<UserService>(TYPES.UserService).to(UserServiceBasic);
 kernel.bind<TestDataService>(TYPES.TestDataService).to(TestDataServiceBasic).inSingletonScope();
+kernel.bind<DistanceService>(TYPES.DistanceService).to(DistanceServiceBasic);
+kernel.bind<TrackingService>(TYPES.TrackingService).to(TrackingServiceBasic);
 kernel.bind<ParkingRepository>(TYPES.ParkingRepository).to(ParkingRepositoryBasic).inSingletonScope();
 kernel.bind<UserRepository>(TYPES.UserRepository).to(UserRepositoryBasic).inSingletonScope();
+kernel.bind<TrackingRepository>(TYPES.TrackingRepository).to(TrackingRepositoryBasic).inSingletonScope();
 kernel.bind<GoogleDistanceMatrixKey>(TYPES.GoogleDistanceMatrixKey).to(GoogleDistanceMatrixKeyBasic).inSingletonScope();
-kernel.bind<DistanceService>(TYPES.DistanceService).to(DistanceServiceBasic);
 
 // some variables
-let version = '0.1.2';
+let version = '0.1.3';
 let logger: Logger = kernel.get<Logger>(TYPES.Logger);
 let parkingService: ParkingService = kernel.get<ParkingService>(TYPES.ParkingService);
 let testDataService: TestDataService = kernel.get<TestDataService>(TYPES.TestDataService);
 let userService: UserService = kernel.get<UserService>(TYPES.UserService);
+let trackingService: TrackingService = kernel.get<TrackingService>(TYPES.TrackingService);
 
 // mongodb (with mongoose) connection
 var mongoose = require('mongoose');
@@ -77,9 +82,7 @@ app.use((request, response, next) => {
     if (restResourceFromRequest(request) === '/ping' ||
         restResourceFromRequest(request) === '/resettestdata' ||
         restResourceFromRequest(request) === '/parking' ||
-        restResourceFromRequest(request) === '/parking/resettestdata' ||
         restResourceFromRequest(request) === '/user' ||
-        restResourceFromRequest(request) === '/user/resettestdata' ||
         restResourceFromRequest(request) === 'noSecurity') {
         next();
     } else {
@@ -291,6 +294,50 @@ app.put('/elleho/' + version + '/user', (request, response) => {
         })
         .onError((err: any) => {
             serverError(response, 'error on updating user ' + err);
+        });
+});
+
+// get all trackings from the database
+app.get('/elleho/' + version + '/tracking', (request, response) => {
+    getUser(request)
+        .onSuccess((user: User) => {
+            logger.info('getting all trackings', user);
+            trackingService.all(user)
+                .onSuccess((trackings: Array<Tracking>) => {
+                    return response.json(trackings);
+                })
+                .onError((err: any) => {
+                    serverError(response, 'error on getting all trackings: ' + err, user);
+                });
+        })
+        .onError((err: any) => {
+            serverError(response, 'error on getting all trackings: ' + err);
+        });
+});
+
+// insert a new tracking to the database
+app.post('/elleho/' + version + '/tracking', (request, response) => {
+    getUser(request)
+        .onSuccess((user: User) => {
+            logger.info('add a new tracking', user);
+            trackingService.track(request.body.position, user)
+                .onSuccess((tracking: Tracking) => {
+                    return response.json({
+                        trackingId: tracking._id,
+                        user: tracking.user.username,
+                        date: tracking.date,
+                        position: {
+                            latitude: tracking.location[0],
+                            longitude: tracking.location[1]
+                        }
+                    });
+                })
+                .onError((err: any) => {
+                    serverError(response, 'error on tracking a position: ' + err, user);
+                });
+        })
+        .onError((err: any) => {
+            serverError(response, 'error on tracking a position ' + err);
         });
 });
 

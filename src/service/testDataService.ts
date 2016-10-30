@@ -6,6 +6,7 @@ import {inject, injectable} from 'inversify';
 import 'reflect-metadata';
 import {Result, ResultBasic} from "../util/result";
 import {UserModel, UserRepository, User} from "../model-db/user";
+import {TrackingRepository, Tracking, TrackingModel} from "../model-db/tracking";
 
 export interface TestDataService {
 
@@ -18,13 +19,16 @@ export class TestDataServiceBasic implements TestDataService {
     logger: Logger;
     userRepository: UserRepository;
     parkingRepository: ParkingRepository;
+    trackingRepository: TrackingRepository;
 
     constructor(@inject(TYPES.Logger) logger: Logger,
                 @inject(TYPES.UserRepository) userRepository: UserRepository,
-                @inject(TYPES.ParkingRepository) parkingRepository: ParkingRepository) {
+                @inject(TYPES.ParkingRepository) parkingRepository: ParkingRepository,
+                @inject(TYPES.TrackingRepository) trackingRepository: TrackingRepository) {
         this.logger = logger;
         this.userRepository = userRepository;
         this.parkingRepository = parkingRepository;
+        this.trackingRepository = trackingRepository;
         logger.info('create ' + this.constructor.name);
     }
 
@@ -32,7 +36,9 @@ export class TestDataServiceBasic implements TestDataService {
         let result: Result<void> = new ResultBasic<void>();
         this.resetUser().onSuccess(() => {
             this.resetParking().onSuccess(() => {
-                result.success(null);
+                this.resetTracking().onSuccess(() => {
+                    result.success(null);
+                });
             });
         });
         return result;
@@ -83,10 +89,52 @@ export class TestDataServiceBasic implements TestDataService {
                 parkingsToCreate.push(new ParkingToCreate('user4', new GeoLocation(48.221406, 16.352793)));
                 parkingsToCreate.push(new ParkingToCreate('user5', new GeoLocation(48.254887, 16.415753)));
                 require('async').each(parkingsToCreate,
-                    function (parkingToCreate, callback) {
+                    function (parkingToCreate: ParkingToCreate, callback) {
                         self.userRepository.findUserByUsername(parkingToCreate.username)
                             .onSuccess((user: User) => {
                                 self.saveParking(parkingToCreate, user).onSuccess(() => {
+                                    callback();
+                                }).onError((err: any) => {
+                                    callback(err);
+                                })
+                            })
+                            .onError((err) => {
+                                callback(err);
+                            });
+                    }, function (err) {
+                        if (err) {
+                            result.error(err);
+                        } else {
+                            result.success(null);
+                        }
+                    });
+
+            });
+        return result;
+    }
+
+    private resetTracking(): Result<void> {
+        let self = this;
+        let result: Result<void> = new ResultBasic<void>();
+        // clear schema
+        this.trackingRepository.removeAll()
+            .onSuccess(() => {
+                let trackingsToCreate: Array<TrackingToCreate> = [];
+                let date: Date = new Date();
+                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213678, 16.348490)));
+                date.setSeconds(date.getSeconds() - 10);
+                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213677, 16.348490)));
+                date.setSeconds(date.getSeconds() - 10);
+                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213676, 16.348490)));
+                date.setSeconds(date.getSeconds() - 10);
+                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213676, 16.348491)));
+                date.setSeconds(date.getSeconds() - 10);
+                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213676, 16.348492)));
+                require('async').each(trackingsToCreate,
+                    function (trackingToCreate: TrackingToCreate, callback) {
+                        self.userRepository.findUserByUsername(trackingToCreate.username)
+                            .onSuccess((user: User) => {
+                                self.saveTracking(trackingToCreate, user).onSuccess(() => {
                                     callback();
                                 }).onError((err: any) => {
                                     callback(err);
@@ -130,6 +178,14 @@ export class TestDataServiceBasic implements TestDataService {
             date: parkingToCreate.date,
             location: parkingToCreate.location,
             state: parkingToCreate.state
+        }), null);
+    }
+
+    private saveTracking(trackingToCreate: TrackingToCreate, user: User): Result<Tracking> {
+        return this.trackingRepository.save(new TrackingModel({
+            user: user,
+            date: trackingToCreate.date,
+            location: trackingToCreate.location,
         }), null);
     }
 }
@@ -176,5 +232,18 @@ export class ParkingToCreate {
         this.date = Date.now();
         this.location = [geoLocation.latitude, geoLocation.longitude];
         this.state = 'OFFER';
+    }
+}
+
+export class TrackingToCreate {
+
+    username: string;
+    date: number;
+    location: any;
+
+    constructor(username: string, date: number, geoLocation: GeoLocation) {
+        this.username = username;
+        this.date = date;
+        this.location = [geoLocation.latitude, geoLocation.longitude];
     }
 }

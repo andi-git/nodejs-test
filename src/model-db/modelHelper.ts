@@ -127,41 +127,4 @@ export abstract class AbstractRepository<T extends mongoose.Document> implements
         });
         return result;
     }
-
-    // update(username: string, userAttributes: Object, user: User): Result<T> {
-    //     let self = this;
-    //     let result: Result<T> = new ResultBasic<T>();
-    //     console.log('--> ' + JSON.stringify(userAttributes));
-    //     console.log('--> ' + JSON.stringify(new UserModel(userAttributes)));
-    //
-    //     this.findOne({'username': username}, 0, {},
-    //         (doc: T) => {
-    //             result.success(doc);
-    //         }, (err) => {
-    //             result.error(err);
-    //         });
-
-        // this.model.update({'username': username}, userAttributes, {}, (err, newDoc) => {
-        //     if (err) {
-        //         self.logger.error(err, user);
-        //         result.error(err);
-        //     } else {
-        //         console.log(newDoc);
-        //         self.logger.info(self.getType() + ' updated', user);
-        //         result.success(newDoc);
-        //     }
-        // });
-
-        // this.model.findOneAndUpdate({'username': username}, userAttributes, {upsert: false}, (err, newDoc) => {
-        //     if (err) {
-        //         self.logger.error(err, user);
-        //         result.error(err);
-        //     } else {
-        //         console.log(newDoc);
-        //         self.logger.info(self.getType() + ' updated', user);
-        //         result.success(newDoc);
-        //     }
-        // });
-        // return result;
-    // }
 }
