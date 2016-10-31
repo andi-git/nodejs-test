@@ -36,6 +36,7 @@
     "./test/integration/rest/parking/offer/get.spec.ts",
     "./test/integration/rest/tracking/get.spec.ts",
     "./test/integration/rest/tracking/post.spec.ts",
+    "./test/integration/rest/tracking/date/put.spec.ts",
     "./test/integration/rest/user/get.spec.ts",
     "./test/integration/rest/user/post.spec.ts",
     "./test/integration/rest/user/put.spec.ts",

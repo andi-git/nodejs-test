@@ -186,6 +186,7 @@ export class TestDataServiceBasic implements TestDataService {
             user: user,
             date: trackingToCreate.date,
             location: trackingToCreate.location,
+            mode: trackingToCreate.mode
         }), null);
     }
 }
@@ -246,5 +247,6 @@ export class TrackingToCreate {
         this.username = username;
         this.date = date;
         this.location = [geoLocation.latitude, geoLocation.longitude];
+        this.mode = mode;
     }
 }

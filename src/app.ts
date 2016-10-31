@@ -344,6 +344,24 @@ app.post('/elleho/' + version + '/tracking', (request, response) => {
         });
 });
 
+// get tracking for a date
+app.put('/elleho/' + version + '/tracking/date', (request, response) => {
+    getUser(request)
+        .onSuccess((user: User) => {
+            logger.info('getting tracking for a date', user);
+            trackingService.findNear(new Date(request.body.date), user)
+                .onSuccess((tracking: Tracking) => {
+                    return response.json(tracking);
+                })
+                .onError((err: any) => {
+                    serverError(response, 'error finding tracking for date ' + request.body.date + ': ' + err, user);
+                });
+        })
+        .onError((err: any) => {
+            serverError(response, 'error finding tracking for date ' + request.body.date + ': ' + err);
+        });
+});
+
 // reset the test-data for user: clear the database-entries and insert new data
 app.post('/elleho/' + version + '/resettestdata', (request, response) => {
     testDataService.resetAll()

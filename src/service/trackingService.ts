@@ -12,6 +12,8 @@ export interface TrackingService {
     all(currentUser: User): Result<Array<Tracking>>;
 
     track(geoLocation: GeoLocation, mode: string, currentUser: User): Result<Tracking>;
+
+    findNear(date: Date, currentUser: User): Result<Tracking>;
 }
 
 @injectable()
@@ -77,5 +79,13 @@ export class TrackingServiceBasic implements TrackingService {
             result.error('unknown mode: ' + mode);
         }
         return result;
+    }
+
+    findNear(date: Date, currentUser: User): Result<Tracking> {
+        let dateFrom = new Date(date.getTime());
+        dateFrom.setSeconds(dateFrom.getSeconds() - 5);
+        let dateTo = new Date(date.getTime());
+        dateTo.setSeconds(dateTo.getSeconds() + 5);
+        return this.trackingRepository.findSingleBetween(dateFrom, dateTo, currentUser);
     }
 }
