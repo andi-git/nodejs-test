@@ -42,6 +42,7 @@ export class TrackingRepositoryBasic extends AbstractRepository<Tracking> implem
         let result: Result<Tracking> = new ResultBasic<Tracking>();
         this.find(
             {
+                user: currentUser,
                 date: {
                     $gte: dateFrom,
                     $lt: dateTo
