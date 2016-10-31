@@ -11,7 +11,7 @@ var api = require('nodeunit-httpclient').create({
     }
 );
 
-exports.testGetUserss = function (test) {
+exports.testGetTracks = function (test) {
 
     IntegrationtestData.resetTestData(() => {
         test.expect(3);

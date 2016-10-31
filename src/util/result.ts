@@ -1,4 +1,4 @@
-import {SyncEvent} from 'ts-events/dist/lib/index';
+import {ReplaySubject} from "@reactivex/rxjs";
 
 export interface Result<T> {
 
@@ -16,17 +16,8 @@ export class ResultBasic<T> implements Result<T> {
     _value: T = null;
     _err: any = null;
     _success: boolean = false;
-    _successEvent = new SyncEvent<T>();
-    _errorEvent = new SyncEvent<T>();
-
-    constructor(result?: T, success?: boolean) {
-        if (result != null) {
-            this._value = result;
-        }
-        if (success != null) {
-            this._success = success;
-        }
-    }
+    _successSubject = new ReplaySubject(1);
+    _errorSubject = new ReplaySubject(1);
 
     public value(): T {
         return this._value;
@@ -34,12 +25,12 @@ export class ResultBasic<T> implements Result<T> {
 
     public success(result: T): void {
         this._value = result;
-        this._successEvent.post(this._value);
+        this._successSubject.next(this._value);
     }
 
     public error(err?: T): void {
         this._err = err;
-        this._errorEvent.post(this._err);
+        this._errorSubject.next(this._err);
     }
 
     public isSuccess(): boolean {
@@ -51,12 +42,12 @@ export class ResultBasic<T> implements Result<T> {
     }
 
     public onSuccess(callback: (res: T) => void): Result<T> {
-        this._successEvent.attach(callback);
+        this._successSubject.subscribe(callback);
         return this;
     }
 
     public onError(callback: (res: T) => void): Result<T> {
-        this._errorEvent.attach(callback);
+        this._errorSubject.subscribe(callback);
         return this;
     }
 

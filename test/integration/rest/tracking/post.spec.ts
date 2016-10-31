@@ -14,16 +14,19 @@ var api = require('nodeunit-httpclient').create({
 exports.testPostTrack = function (test) {
 
     IntegrationtestData.resetTestData(() => {
-        test.expect(7);
+        test.expect(8);
         api.post(test, '', {
             headers: {
                 username: 'elle',
                 password: 'ho'
             },
             body: {
-                position: {
-                    latitude: '48.224092',
-                    longitude: '16.396591'
+                tracking: {
+                    position: {
+                        latitude: '48.224092',
+                        longitude: '16.396591'
+                    },
+                    mode: 'drive'
                 }
             }
         }, {
@@ -34,6 +37,34 @@ exports.testPostTrack = function (test) {
             test.ok(res.body.includes('elle'));
             test.ok(res.body.includes('48.224092'));
             test.ok(res.body.includes('16.396591'));
+            test.ok(res.body.includes('drive'));
+            test.done();
+        });
+
+    });
+};
+
+exports.testPostTrackNoMode = function (test) {
+
+    IntegrationtestData.resetTestData(() => {
+        test.expect(3);
+        api.post(test, '', {
+            headers: {
+                username: 'elle',
+                password: 'ho'
+            },
+            body: {
+                tracking: {
+                    position: {
+                        latitude: '48.224092',
+                        longitude: '16.396591'
+                    }
+                }
+            }
+        }, {
+            status: 500
+        }, function (res) {
+            test.ok(res.body.includes('error on tracking a position: unknown mode: undefined'));
             test.done();
         });
 

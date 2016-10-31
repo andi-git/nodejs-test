@@ -10,12 +10,15 @@ export interface Tracking extends mongoose.Document {
     user: User,
     date: Date,
     location: {type: [Number], index: '2d'},
+    mode: string
 }
 
+//noinspection ReservedWordAsName
 export const TrackingSchema = new mongoose.Schema({
     user: {type: Schema.Types.ObjectId, ref: 'User', required: false},
     date: {type: Date, required: true},
-    location: {type: [Number], index: '2d', required: true}
+    location: {type: [Number], index: '2d', required: true},
+    mode: {type: String, required: false, default: 'unknown'}
 });
 
 export const TrackingModel = mongoose.model<Tracking>('Tracking', TrackingSchema);

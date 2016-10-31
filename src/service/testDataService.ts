@@ -121,15 +121,15 @@ export class TestDataServiceBasic implements TestDataService {
             .onSuccess(() => {
                 let trackingsToCreate: Array<TrackingToCreate> = [];
                 let date: Date = new Date();
-                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213678, 16.348490)));
+                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213678, 16.348490), 'drive'));
                 date.setSeconds(date.getSeconds() - 10);
-                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213677, 16.348490)));
+                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213677, 16.348490), 'drive'));
                 date.setSeconds(date.getSeconds() - 10);
-                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213676, 16.348490)));
+                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213676, 16.348490), 'drive'));
                 date.setSeconds(date.getSeconds() - 10);
-                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213676, 16.348491)));
+                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213676, 16.348491), 'walk'));
                 date.setSeconds(date.getSeconds() - 10);
-                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213676, 16.348492)));
+                trackingsToCreate.push(new TrackingToCreate('elle', date.getTime(), new GeoLocation(48.213676, 16.348492), 'walk'));
                 require('async').each(trackingsToCreate,
                     function (trackingToCreate: TrackingToCreate, callback) {
                         self.userRepository.findUserByUsername(trackingToCreate.username)
@@ -240,8 +240,9 @@ export class TrackingToCreate {
     username: string;
     date: number;
     location: any;
+    mode: string;
 
-    constructor(username: string, date: number, geoLocation: GeoLocation) {
+    constructor(username: string, date: number, geoLocation: GeoLocation, mode: string) {
         this.username = username;
         this.date = date;
         this.location = [geoLocation.latitude, geoLocation.longitude];

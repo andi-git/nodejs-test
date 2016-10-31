@@ -11,7 +11,7 @@ export interface TrackingService {
 
     all(currentUser: User): Result<Array<Tracking>>;
 
-    track(geoLocation: GeoLocation, currentUser: User): Result<Tracking>;
+    track(geoLocation: GeoLocation, mode: string, currentUser: User): Result<Tracking>;
 }
 
 @injectable()
@@ -27,20 +27,27 @@ export class TrackingServiceBasic implements TrackingService {
         logger.info('create ' + this.constructor.name);
     }
 
-    track(geoLocation: GeoLocation, currentUser: User): Result<Tracking> {
+    track(geoLocation: GeoLocation, mode: string, currentUser: User): Result<Tracking> {
         let result: Result<Tracking> = new ResultBasic<Tracking>();
-        var trackingNew = new TrackingModel({
-            user: currentUser,
-            date: Date.now(),
-            location: [geoLocation.latitude, geoLocation.longitude]
-        });
-        this.trackingRepository.save(trackingNew, currentUser)
-            .onSuccess((trackingSaved: Tracking) => {
-                this.logger.info('track ' + trackingSaved._id + ' at ' + trackingSaved.location + ' on ' + trackingSaved.date, currentUser);
-                result.success(trackingSaved);
+        this.checkMode(mode)
+            .onSuccess((mode: string) => {
+                var trackingNew = new TrackingModel({
+                    user: currentUser,
+                    date: Date.now(),
+                    location: [geoLocation.latitude, geoLocation.longitude],
+                    mode: mode
+                });
+                this.trackingRepository.save(trackingNew, currentUser)
+                    .onSuccess((trackingSaved: Tracking) => {
+                        this.logger.info('track ' + trackingSaved._id + ' at ' + trackingSaved.location + ' on ' + trackingSaved.date, currentUser);
+                        result.success(trackingSaved);
+                    })
+                    .onError((err) => {
+                        result.error(err);
+                    });
             })
             .onError((err) => {
-                result.error(err);
+               result.error(err);
             });
         return result;
     }
@@ -58,6 +65,17 @@ export class TrackingServiceBasic implements TrackingService {
             (err: any) => {
                 result.error(err);
             });
+        return result;
+    }
+
+    //noinspection JSMethodCanBeStatic
+    private checkMode(mode: string): Result<string> {
+        let result: Result<string> = new ResultBasic<string>();
+        if (mode === 'drive' || mode === 'walk' || mode === 'unknown') {
+            result.success(mode);
+        } else {
+            result.error('unknown mode: ' + mode);
+        }
         return result;
     }
 }

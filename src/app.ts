@@ -52,7 +52,9 @@ mongoose.connection.on('error', console.error.bind(console, 'connection error:')
 
 var serverError = function (response: Response, message: string, user?: User) {
     logger.error(message, user);
+    response.type('application/json; charset=utf-8');
     response.writeHead(500);
+    response.write('{"error": "' + message + '"}');
     response.end();
 };
 
@@ -320,7 +322,7 @@ app.post('/elleho/' + version + '/tracking', (request, response) => {
     getUser(request)
         .onSuccess((user: User) => {
             logger.info('add a new tracking', user);
-            trackingService.track(request.body.position, user)
+            trackingService.track(request.body.tracking.position, request.body.tracking.mode, user)
                 .onSuccess((tracking: Tracking) => {
                     return response.json({
                         trackingId: tracking._id,
@@ -329,7 +331,8 @@ app.post('/elleho/' + version + '/tracking', (request, response) => {
                         position: {
                             latitude: tracking.location[0],
                             longitude: tracking.location[1]
-                        }
+                        },
+                        mode: tracking.mode
                     });
                 })
                 .onError((err: any) => {
