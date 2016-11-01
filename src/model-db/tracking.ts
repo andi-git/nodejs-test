@@ -27,6 +27,8 @@ export const TrackingModel = mongoose.model<Tracking>('Tracking', TrackingSchema
 export interface TrackingRepository extends Repository<Tracking> {
 
     findSingleBetween(dateFrom: Date, dateTo: Date, currentUser: User): Result<Tracking>;
+
+    findLatestForMode(mode: string, currentUser: User): Result<Tracking>;
 }
 
 @injectable()
@@ -37,7 +39,7 @@ export class TrackingRepositoryBasic extends AbstractRepository<Tracking> implem
         this.logger.info('create ' + this.constructor.name);
     }
 
-    findSingleBetween(dateFrom: Date, dateTo: Date, currentUser: User): Result<Tracking> {
+    public findSingleBetween(dateFrom: Date, dateTo: Date, currentUser: User): Result<Tracking> {
         let self = this;
         let result: Result<Tracking> = new ResultBasic<Tracking>();
         this.find(
@@ -56,6 +58,31 @@ export class TrackingRepositoryBasic extends AbstractRepository<Tracking> implem
                     result.success(tracking[0]);
                 } else {
                     result.error('no tracking found between ' + dateFrom + ' and ' + dateTo);
+                }
+            },
+            (err: any) => {
+                self.logger.error(err);
+                result.error();
+            });
+        return result;
+    }
+
+    public findLatestForMode(mode: string, currentUser: User): Result<Tracking> {
+        let self = this;
+        let result: Result<Tracking> = new ResultBasic<Tracking>();
+        this.findOne(
+            {
+                user: currentUser,
+                mode: mode
+            },
+            1,
+            'date:-1',
+            (tracking: Tracking) => {
+                if (tracking) {
+                    self.logger.info('found tracking with mode ' + mode + '"' + tracking.date + '": ' + tracking.location);
+                    result.success(tracking);
+                } else {
+                    result.error('no tracking found with mode ' + mode);
                 }
             },
             (err: any) => {

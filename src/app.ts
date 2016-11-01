@@ -344,21 +344,56 @@ app.post('/elleho/' + version + '/tracking', (request, response) => {
         });
 });
 
-// get tracking for a date
-app.put('/elleho/' + version + '/tracking/date', (request, response) => {
+// search tracking for a date
+app.put('/elleho/' + version + '/tracking/search/date', (request, response) => {
     getUser(request)
         .onSuccess((user: User) => {
-            logger.info('getting tracking for a date', user);
+            logger.info('searching tracking for a date', user);
             trackingService.findNear(new Date(request.body.date), user)
                 .onSuccess((tracking: Tracking) => {
-                    return response.json(tracking);
+                    return response.json({
+                        user: tracking.user.username,
+                        date: tracking.date,
+                        position: {
+                            latitude: tracking.location[0],
+                            longitude: tracking.location[1]
+                        },
+                        mode: tracking.mode
+                    });
                 })
                 .onError((err: any) => {
-                    serverError(response, 'error finding tracking for date ' + request.body.date + ': ' + err, user);
+                    serverError(response, 'error getting tracking for date ' + request.body.date + ': ' + err, user);
                 });
         })
         .onError((err: any) => {
-            serverError(response, 'error finding tracking for date ' + request.body.date + ': ' + err);
+            serverError(response, 'error getting tracking for date ' + request.body.date + ': ' + err);
+        });
+});
+
+// search last tracking with a defined mode
+app.get('/elleho/' + version + '/tracking/search/latest/mode/:mode', (request, response) => {
+    let mode: string = request.params.mode;
+    getUser(request)
+        .onSuccess((user: User) => {
+            logger.info('searching latest tracking with mode ' + mode, user);
+            trackingService.findLatest(mode, user)
+                .onSuccess((tracking: Tracking) => {
+                    return response.json({
+                        user: tracking.user.username,
+                        date: tracking.date,
+                        position: {
+                            latitude: tracking.location[0],
+                            longitude: tracking.location[1]
+                        },
+                        mode: tracking.mode
+                    });
+                })
+                .onError((err: any) => {
+                    serverError(response, 'error searching latest tracking with mode ' + mode + ': ' + err, user);
+                });
+        })
+        .onError((err: any) => {
+            serverError(response, 'error searching tracking with mode ' + mode + ': ' + err);
         });
 });
 

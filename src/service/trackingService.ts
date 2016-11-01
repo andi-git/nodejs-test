@@ -14,6 +14,8 @@ export interface TrackingService {
     track(geoLocation: GeoLocation, mode: string, currentUser: User): Result<Tracking>;
 
     findNear(date: Date, currentUser: User): Result<Tracking>;
+
+    findLatest(mode: string, currentUser: User): Result<Tracking>;
 }
 
 @injectable()
@@ -81,11 +83,30 @@ export class TrackingServiceBasic implements TrackingService {
         return result;
     }
 
-    findNear(date: Date, currentUser: User): Result<Tracking> {
+    public findNear(date: Date, currentUser: User): Result<Tracking> {
         let dateFrom = new Date(date.getTime());
         dateFrom.setSeconds(dateFrom.getSeconds() - 5);
         let dateTo = new Date(date.getTime());
         dateTo.setSeconds(dateTo.getSeconds() + 5);
         return this.trackingRepository.findSingleBetween(dateFrom, dateTo, currentUser);
     }
+
+    public findLatest(mode: string, currentUser: User): Result<Tracking> {
+        let result: Result<Tracking> = new ResultBasic<Tracking>();
+        this.checkMode(mode)
+            .onSuccess((mode: string) => {
+                this.trackingRepository.findLatestForMode(mode, currentUser)
+                    .onSuccess((tracking: Tracking) => {
+                        result.success(tracking);
+                    })
+                    .onError((err: any) => {
+                        result.error(err);
+                    })
+            })
+            .onError((err: any) => {
+               result.error(err);
+            });
+        return result;
+    }
+
 }

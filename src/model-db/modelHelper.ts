@@ -3,7 +3,7 @@ import {Logger} from "../util/logger";
 import {Result, ResultBasic} from "../util/result";
 import {Model} from "mongoose";
 import {Query} from "mongoose";
-import {User, UserModel} from "./user";
+import {User} from "./user";
 import {injectable, inject, unmanaged} from "inversify";
 import TYPES from "../types";
 
@@ -17,7 +17,7 @@ export interface Repository<T extends mongoose.Document> {
 
     removeAll(): Result<void>;
 
-    save(model: T, user: User): Result<T>;
+    save(model: T, currentUser: User): Result<T>;
 
     getType(): string;
 }
@@ -113,15 +113,15 @@ export abstract class AbstractRepository<T extends mongoose.Document> implements
         return result;
     }
 
-    save(model: T, user: User): Result<T> {
+    save(model: T, currentUser: User): Result<T> {
         let self = this;
         let result: Result<T> = new ResultBasic<T>();
         model.save((err) => {
             if (err) {
-                self.logger.error(err, user);
+                self.logger.error(err, currentUser);
                 result.error();
             } else {
-                self.logger.info(self.getType() + ' saved', user);
+                self.logger.info(self.getType() + ' saved', currentUser);
                 result.success(model);
             }
         });
