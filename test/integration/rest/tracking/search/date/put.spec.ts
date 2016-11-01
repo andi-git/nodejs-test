@@ -11,7 +11,7 @@ var api = require('nodeunit-httpclient').create({
     }
 );
 
-exports.testPutTrackingByDate_Drive = function (test) {
+exports.testPutTrackingSearchByDate_Drive = function (test) {
 
     IntegrationtestData.resetTestData(() => {
         test.expect(3);
@@ -34,7 +34,7 @@ exports.testPutTrackingByDate_Drive = function (test) {
     });
 };
 
-exports.testPutTrackingByDate_Walk = function (test) {
+exports.testPutTrackingSearchByDate_Walk = function (test) {
 
     IntegrationtestData.resetTestData(() => {
         test.expect(3);
@@ -57,7 +57,7 @@ exports.testPutTrackingByDate_Walk = function (test) {
     });
 };
 
-exports.testPutTrackingByDate_Unknown = function (test) {
+exports.testPutTrackingSearchByDate_Unknown = function (test) {
 
     IntegrationtestData.resetTestData(() => {
         test.expect(3);

@@ -11,7 +11,7 @@ var api = require('nodeunit-httpclient').create({
     }
 );
 
-exports.testGetTracks = function (test) {
+exports.testGetSearchLatestModeWalk = function (test) {
 
     IntegrationtestData.resetTestData(() => {
         test.expect(4);
